@@ -1,3 +1,0 @@
-
-const SUPABASE_URL = 'https://segqpdkygxdzzpkkgiem.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_qqYzdEF5y0fJwtL_-lZHBQ_EUYPS3JC';
