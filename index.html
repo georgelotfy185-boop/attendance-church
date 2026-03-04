@@ -118,14 +118,14 @@
 </head>
 <body>
     <div class="container" id="app">
-        <!-- سيتم ملء المحتوى عبر JavaScript -->
+        <!-- يتم ملء المحتوى عبر JavaScript -->
     </div>
 
     <script>
-        // ------------------- إعدادات Supabase (عدل هنا) -------------------
+        // ------------------- إعدادات Supabase (ثابتة الآن) -------------------
         const SUPABASE_URL = 'https://segqpdkygxdzzpkkgiem.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_qqYzdEF5y0fJwtL_-1ZHBQ_EUYPS3JC';
-        // -----------------------------------------------------------------
+        // ---------------------------------------------------------------------
 
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -138,11 +138,13 @@
         async function init() {
             const { data: { session }, error } = await supabase.auth.getSession();
             if (session?.user) {
+                // ✅ استعلام صحيح مع جلب بيانات الفصل المرتبط
                 const { data: userData, error: userError } = await supabase
                     .from('users')
                     .select('*, classes(id, class_name)')
                     .eq('id', session.user.id)
                     .single();
+
                 if (userData) {
                     currentUser = userData;
                     currentClassId = userData.class_id;
