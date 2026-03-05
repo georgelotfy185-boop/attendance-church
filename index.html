@@ -122,10 +122,14 @@
     </div>
 
     <script>
-        // ------------------- إعدادات Supabase (ثابتة الآن) -------------------
-        const SUPABASE_URL = 'https://segqpdkygxdzzpkkgiem.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_qqYzdEF5y0fJwtL_-1ZHBQ_EUYPS3JC';
-        // ---------------------------------------------------------------------
+        // ============================================================
+        // ✅ تم تحديث عنوان URL من إعدادات Supabase الخاصة بك
+        const SUPABASE_URL = 'https://segqdbkgyxdzpkkgiem.supabase.co';
+
+        // ⚠️ مهم جداً: استبدل القيمة التالية بالمفتاح الصحيح من Supabase
+        //    اذهب إلى Project Settings → API → انسخ "anon public" (يبدأ بـ eyJhbGciOiJIUzI1NiIs...)
+        const SUPABASE_ANON_KEY = 'ضع_المفتاح_الصحيح_هنا'; // ⬅️ استبدل هذا النص
+        // ============================================================
 
         // استخدام اسم مختلف لتجنب التعارض مع window.supabase
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -139,7 +143,6 @@
         async function init() {
             const { data: { session }, error } = await supabaseClient.auth.getSession();
             if (session?.user) {
-                // ✅ استعلام صحيح مع جلب بيانات الفصل المرتبط
                 const { data: userData, error: userError } = await supabaseClient
                     .from('users')
                     .select('*, classes(id, class_name)')
@@ -381,9 +384,7 @@
             init();
         }
 
-        // رسالة تأكيد أن الملف الجديد يعمل
         console.log('الملف الجديد يعمل');
-
         init();
     </script>
 </body>
