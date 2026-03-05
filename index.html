@@ -6,113 +6,24 @@
     <title>نظام الحضور - مدارس الأحد</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        body {
-            background: #f3f4f6;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            padding: 24px;
-        }
-        .header {
+        /* ... (الأنماط السابقة) ... */
+        .date-picker {
+            margin-bottom: 20px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 24px;
-            border-bottom: 2px solid #e5e7eb;
-            padding-bottom: 16px;
+            gap: 10px;
         }
-        .logo {
-            font-size: 24px;
+        .date-picker label {
+            font-weight: bold;
+        }
+        .date-picker input {
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+        }
+        .total-grade {
             font-weight: bold;
             color: #1e3a8a;
-        }
-        .btn {
-            background: #1e3a8a;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        .btn:hover {
-            background: #2563eb;
-        }
-        .login-form {
-            max-width: 400px;
-            margin: 40px auto;
-            padding: 24px;
-            background: #f9fafb;
-            border-radius: 12px;
-        }
-        .login-form input {
-            width: 100%;
-            padding: 12px;
-            margin: 8px 0 16px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-        }
-        .table-wrapper {
-            overflow-x: auto;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 16px;
-        }
-        th, td {
-            border: 1px solid #e5e7eb;
-            padding: 12px;
-            text-align: center;
-        }
-        th {
-            background: #1e3a8a;
-            color: white;
-        }
-        .grade-input {
-            width: 70px;
-            padding: 6px;
-            text-align: center;
-            border: 1px solid #d1d5db;
-            border-radius: 4px;
-        }
-        .behavior-select {
-            width: 70px;
-            padding: 6px;
-        }
-        .save-btn {
-            background: #059669;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 18px;
-            margin-top: 20px;
-            cursor: pointer;
-        }
-        .message {
-            padding: 12px;
-            border-radius: 8px;
-            margin: 16px 0;
-        }
-        .success {
-            background: #d1fae5;
-            color: #065f46;
-        }
-        .error {
-            background: #fee2e2;
-            color: #991b1b;
         }
     </style>
 </head>
@@ -122,12 +33,11 @@
     </div>
 
     <script>
-        // ------------------- إعدادات Supabase (تم التعديل النهائي) -------------------
+        // ------------------- إعدادات Supabase -------------------
         const SUPABASE_URL = 'https://segqpdkygxdzzpkkgiem.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlZ3FwZGt5Z3hkenpwa2tnaWVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5NDQzOTMsImV4cCI6MjA4NzUyMDM5M30.wPx74fmu93ii-tm6iIeyPucRsNnSA8SFUsHhJitp1bs';
-        // -------------------------------------------------------------------------
+        // --------------------------------------------------------
 
-        // استخدام اسم مختلف لتجنب التعارض مع window.supabase
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let currentUser = null;
@@ -135,6 +45,21 @@
         let students = [];
 
         const app = document.getElementById('app');
+
+        // دالة لجلب آخر جمعة (أو التاريخ الحالي)
+        function getDefaultDate() {
+            const today = new Date();
+            const day = today.getDay(); // 0 = الأحد, 5 = الجمعة
+            if (day === 5) {
+                return today.toISOString().split('T')[0];
+            } else {
+                // العودة إلى آخر جمعة
+                const diff = day >= 5 ? day - 5 : day + 2; // حساب الفرق
+                const lastFriday = new Date(today);
+                lastFriday.setDate(today.getDate() - diff);
+                return lastFriday.toISOString().split('T')[0];
+            }
+        }
 
         async function init() {
             const { data: { session }, error } = await supabaseClient.auth.getSession();
@@ -225,17 +150,35 @@
             });
         }
 
+        // دالة لحساب المجموع من المدخلات
+        function calculateTotal(row) {
+            const mass = parseInt(row.querySelector('[data-field="mass"]').value) || 0;
+            const communion = parseInt(row.querySelector('[data-field="communion"]').value) || 0;
+            const classGrade = parseInt(row.querySelector('[data-field="class"]').value) || 0;
+            const behavior = parseInt(row.querySelector('[data-field="behavior"]').value) || 0;
+            return mass + communion + classGrade + behavior;
+        }
+
+        // دالة لتحديث المجموع في الصف
+        function updateTotal(row) {
+            const totalCell = row.querySelector('.total-grade');
+            if (totalCell) {
+                totalCell.textContent = calculateTotal(row);
+            }
+        }
+
         function renderAttendanceTable() {
+            const defaultDate = getDefaultDate();
             let rows = '';
             students.forEach(s => {
                 rows += `
-                    <tr>
+                    <tr data-student-id="${s.id}">
                         <td>${s.name}</td>
-                        <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="mass" value="0"></td>
-                        <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="communion" value="0"></td>
-                        <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="class" value="0"></td>
+                        <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="mass" value="0" oninput="updateTotal(this.closest('tr'))"></td>
+                        <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="communion" value="0" oninput="updateTotal(this.closest('tr'))"></td>
+                        <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="class" value="0" oninput="updateTotal(this.closest('tr'))"></td>
                         <td>
-                            <select class="behavior-select" data-id="${s.id}" data-field="behavior">
+                            <select class="behavior-select" data-id="${s.id}" data-field="behavior" onchange="updateTotal(this.closest('tr'))">
                                 <option value="0">0</option>
                                 <option value="1">1</option>
                                 <option value="2">2</option>
@@ -245,6 +188,7 @@
                             </select>
                         </td>
                         <td><input type="text" class="grade-input" data-id="${s.id}" data-field="notes" placeholder="ملاحظات"></td>
+                        <td><span class="total-grade">0</span></td> <!-- عمود المجموع -->
                     </tr>
                 `;
             });
@@ -253,6 +197,10 @@
                     <div class="header">
                         <div class="logo">${currentUser?.classes?.class_name || 'الفصل'}</div>
                         <button class="btn" id="logoutBtn">تسجيل خروج</button>
+                    </div>
+                    <div class="date-picker">
+                        <label for="attendanceDate">التاريخ:</label>
+                        <input type="date" id="attendanceDate" value="${defaultDate}">
                     </div>
                     <div class="table-wrapper">
                         <table>
@@ -264,6 +212,7 @@
                                     <th>حضور الخدمة (0/10)</th>
                                     <th>السلوك (0-5)</th>
                                     <th>ملاحظات</th>
+                                    <th>المجموع</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -280,16 +229,17 @@
         }
 
         function renderAttendanceTableForAdmin(classId) {
+            const defaultDate = getDefaultDate();
             let rows = '';
             students.forEach(s => {
                 rows += `
-                    <tr>
+                    <tr data-student-id="${s.id}">
                         <td>${s.name}</td>
-                        <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="mass" value="0"></td>
-                        <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="communion" value="0"></td>
-                        <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="class" value="0"></td>
+                        <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="mass" value="0" oninput="updateTotal(this.closest('tr'))"></td>
+                        <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="communion" value="0" oninput="updateTotal(this.closest('tr'))"></td>
+                        <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="class" value="0" oninput="updateTotal(this.closest('tr'))"></td>
                         <td>
-                            <select class="behavior-select" data-id="${s.id}" data-field="behavior">
+                            <select class="behavior-select" data-id="${s.id}" data-field="behavior" onchange="updateTotal(this.closest('tr'))">
                                 <option value="0">0</option>
                                 <option value="1">1</option>
                                 <option value="2">2</option>
@@ -299,10 +249,15 @@
                             </select>
                         </td>
                         <td><input type="text" class="grade-input" data-id="${s.id}" data-field="notes" placeholder="ملاحظات"></td>
+                        <td><span class="total-grade">0</span></td>
                     </tr>
                 `;
             });
             document.getElementById('adminTable').innerHTML = `
+                <div class="date-picker">
+                    <label for="attendanceDate">التاريخ:</label>
+                    <input type="date" id="attendanceDate" value="${defaultDate}">
+                </div>
                 <div class="table-wrapper">
                     <table>
                         <thead>
@@ -313,6 +268,7 @@
                                 <th>حضور الخدمة (0/10)</th>
                                 <th>السلوك (0-5)</th>
                                 <th>ملاحظات</th>
+                                <th>المجموع</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -328,36 +284,29 @@
 
         async function saveAttendance(classIdForAdmin = null) {
             const classId = classIdForAdmin || currentClassId;
-            const date = new Date().toISOString().split('T')[0];
+            const dateInput = document.getElementById('attendanceDate');
+            const date = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
             const records = [];
-            const inputs = document.querySelectorAll('[data-id]');
-            const studentMap = new Map();
-            inputs.forEach(inp => {
-                const studentId = inp.dataset.id;
-                const field = inp.dataset.field;
-                if (!studentMap.has(studentId)) {
-                    studentMap.set(studentId, { student_id: studentId, mass: 0, communion: 0, class: 0, behavior: 0, notes: '' });
-                }
-                const studentRecord = studentMap.get(studentId);
-                if (field === 'mass') studentRecord.mass = parseInt(inp.value) || 0;
-                if (field === 'communion') studentRecord.communion = parseInt(inp.value) || 0;
-                if (field === 'class') studentRecord.class = parseInt(inp.value) || 0;
-                if (field === 'behavior') studentRecord.behavior = parseInt(inp.value) || 0;
-                if (field === 'notes') studentRecord.notes = inp.value;
-            });
-
-            for (let [studentId, rec] of studentMap) {
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const studentId = row.dataset.studentId;
+                if (!studentId) return;
+                const mass = row.querySelector('[data-field="mass"]')?.value || 0;
+                const communion = row.querySelector('[data-field="communion"]')?.value || 0;
+                const classGrade = row.querySelector('[data-field="class"]')?.value || 0;
+                const behavior = row.querySelector('[data-field="behavior"]')?.value || 0;
+                const notes = row.querySelector('[data-field="notes"]')?.value || '';
                 records.push({
                     student_id: studentId,
                     date: date,
-                    mass_grade: rec.mass,
-                    communion_grade: rec.communion,
-                    class_grade: rec.class,
-                    behavior_grade: rec.behavior,
-                    notes: rec.notes,
+                    mass_grade: parseInt(mass) || 0,
+                    communion_grade: parseInt(communion) || 0,
+                    class_grade: parseInt(classGrade) || 0,
+                    behavior_grade: parseInt(behavior) || 0,
+                    notes: notes,
                     recorded_by: currentUser.id
                 });
-            }
+            });
 
             let hasError = false;
             for (let rec of records) {
@@ -379,6 +328,10 @@
             await supabaseClient.auth.signOut();
             init();
         }
+
+        // ربط دوال التحديث بالكائن العام window ليتم استدعاؤها من HTML
+        window.updateTotal = updateTotal;
+        window.calculateTotal = calculateTotal;
 
         console.log('الملف الجديد يعمل');
         init();
