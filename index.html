@@ -122,14 +122,10 @@
     </div>
 
     <script>
-        // ============================================================
-        // ✅ تم تحديث عنوان URL من إعدادات Supabase الخاصة بك
-        const SUPABASE_URL = 'https://segqdbkgyxdzpkkgiem.supabase.co';
-
-        // ⚠️ مهم جداً: استبدل القيمة التالية بالمفتاح الصحيح من Supabase
-        //    اذهب إلى Project Settings → API → انسخ "anon public" (يبدأ بـ eyJhbGciOiJIUzI1NiIs...)
-        const SUPABASE_ANON_KEY = 'ضع_المفتاح_الصحيح_هنا'; // ⬅️ استبدل هذا النص
-        // ============================================================
+        // ------------------- إعدادات Supabase (تم التعديل النهائي) -------------------
+        const SUPABASE_URL = 'https://segqpdkygxdzzpkkgiem.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlZ3FwZGt5Z3hkenpwa2tnaWVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5NDQzOTMsImV4cCI6MjA4NzUyMDM5M30.wPx74fmu93ii-tm6iIeyPucRsNnSA8SFUsHhJitp1bs';
+        // -------------------------------------------------------------------------
 
         // استخدام اسم مختلف لتجنب التعارض مع window.supabase
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
