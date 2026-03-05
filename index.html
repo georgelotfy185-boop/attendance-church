@@ -36,7 +36,6 @@
         .logo {
             font-size: 24px;
             font-weight: bold;
-            color: #1e3a8a;
             background: linear-gradient(135deg, #1e3a8a, #3b82f6);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -82,7 +81,6 @@
             border: 1px solid #d1d5db;
             border-radius: 16px;
             font-size: 16px;
-            transition: border 0.2s;
         }
         .login-form input:focus {
             border-color: #1e3a8a;
@@ -108,6 +106,33 @@
             border-radius: 12px;
             font-size: 16px;
             background: white;
+        }
+        .dashboard-summary {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 20px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            flex: 1 1 160px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+        .stat-card h4 {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1e3a8a;
         }
         .table-wrapper {
             overflow-x: auto;
@@ -154,6 +179,8 @@
             background: #e0f2fe;
             border-radius: 8px;
             padding: 5px 0;
+            min-width: 50px;
+            display: inline-block;
         }
         .absent-warning {
             background-color: #fee2e2;
@@ -163,6 +190,7 @@
             padding: 4px 8px;
             font-size: 13px;
             display: inline-block;
+            margin-left: 5px;
         }
         .save-btn {
             background: #10b981;
@@ -196,33 +224,6 @@
             background: #fee2e2;
             color: #991b1b;
         }
-        .dashboard-summary {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-            background: #f9fafb;
-            padding: 20px;
-            border-radius: 20px;
-        }
-        .stat-card {
-            background: white;
-            border-radius: 16px;
-            padding: 16px;
-            flex: 1 1 180px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            text-align: center;
-        }
-        .stat-card h4 {
-            color: #6b7280;
-            font-size: 14px;
-            margin-bottom: 8px;
-        }
-        .stat-card .value {
-            font-size: 28px;
-            font-weight: 700;
-            color: #1e3a8a;
-        }
     </style>
 </head>
 <body>
@@ -239,11 +240,10 @@
         let currentUser = null;
         let currentClassId = null;
         let students = [];
-        let attendanceRecords = []; // لتخزين سجلات اليوم الحالي
+        let attendanceRecords = [];
 
         const app = document.getElementById('app');
 
-        // دالة للحصول على تاريخ اليوم (بتنسيق YYYY-MM-DD)
         function getTodayDate() {
             const today = new Date();
             const yyyy = today.getFullYear();
@@ -252,19 +252,129 @@
             return `${yyyy}-${mm}-${dd}`;
         }
 
-        // دالة لجلب سجلات الحضور ليوم معين
         async function fetchAttendanceForDate(classId, date) {
-            if (!classId) return [];
+            if (!classId || !students.length) return [];
+            const studentIds = students.map(s => s.id);
             const { data, error } = await supabaseClient
                 .from('attendance')
                 .select('*')
-                .eq('student_id', students.map(s => s.id))
+                .in('student_id', studentIds)
                 .eq('date', date);
             if (error) {
-                console.error(error);
+                console.error('Error fetching attendance:', error);
                 return [];
             }
             return data || [];
+        }
+
+        // دالة لحساب المجموع لطالب بناءً على قيم الحقول
+        function calculateTotal(row) {
+            const mass = parseInt(row.querySelector('[data-field="mass"]')?.value) || 0;
+            const communion = parseInt(row.querySelector('[data-field="communion"]')?.value) || 0;
+            const classGrade = parseInt(row.querySelector('[data-field="class"]')?.value) || 0;
+            const behavior = parseInt(row.querySelector('[data-field="behavior"]')?.value) || 0;
+            return mass + communion + classGrade + behavior;
+        }
+
+        // دالة لتحديث المجموع في صف معين وإظهار/إخفاء تحذير الغياب
+        function updateRowTotal(row) {
+            const totalCell = row.querySelector('.total-grade');
+            if (!totalCell) return;
+            const total = calculateTotal(row);
+            totalCell.textContent = total;
+
+            // تحديث تحذير الغياب إذا كان المجموع صفر
+            const nameCell = row.cells[0];
+            let warningSpan = nameCell.querySelector('.absent-warning');
+            if (total === 0) {
+                if (!warningSpan) {
+                    const studentName = nameCell.childNodes[0]?.nodeValue || '';
+                    nameCell.innerHTML = `${studentName} <span class="absent-warning">⚠️ غائب</span>`;
+                }
+            } else {
+                if (warningSpan) warningSpan.remove();
+            }
+        }
+
+        // دالة لحساب الإحصائيات وعرضها
+        function updateDashboard() {
+            const totalStudents = students.length;
+            let presentCount = 0;
+            let totalMass = 0, totalCommunion = 0, totalClass = 0, totalBehavior = 0;
+            let sumTotal = 0;
+
+            document.querySelectorAll('tbody tr').forEach(row => {
+                const mass = parseInt(row.querySelector('[data-field="mass"]')?.value) || 0;
+                const communion = parseInt(row.querySelector('[data-field="communion"]')?.value) || 0;
+                const classGrade = parseInt(row.querySelector('[data-field="class"]')?.value) || 0;
+                const behavior = parseInt(row.querySelector('[data-field="behavior"]')?.value) || 0;
+                const total = mass + communion + classGrade + behavior;
+
+                totalMass += mass;
+                totalCommunion += communion;
+                totalClass += classGrade;
+                totalBehavior += behavior;
+                sumTotal += total;
+
+                if (mass === 10 && communion === 10 && classGrade === 10) presentCount++;
+            });
+
+            const avgMass = totalStudents ? (totalMass / totalStudents).toFixed(1) : 0;
+            const avgCommunion = totalStudents ? (totalCommunion / totalStudents).toFixed(1) : 0;
+            const avgClass = totalStudents ? (totalClass / totalStudents).toFixed(1) : 0;
+            const avgBehavior = totalStudents ? (totalBehavior / totalStudents).toFixed(1) : 0;
+            const avgTotal = totalStudents ? (sumTotal / totalStudents).toFixed(1) : 0;
+
+            // تحديث لوحة الإحصائيات
+            const dashboard = document.querySelector('.dashboard-summary');
+            if (dashboard) {
+                dashboard.innerHTML = `
+                    <div class="stat-card">
+                        <h4>عدد الطلاب</h4>
+                        <div class="value">${totalStudents}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>الحضور الكامل</h4>
+                        <div class="value">${presentCount}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>متوسط القداس</h4>
+                        <div class="value">${avgMass}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>متوسط التناول</h4>
+                        <div class="value">${avgCommunion}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>متوسط الخدمة</h4>
+                        <div class="value">${avgClass}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>متوسط السلوك</h4>
+                        <div class="value">${avgBehavior}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>متوسط المجموع</h4>
+                        <div class="value">${avgTotal}</div>
+                    </div>
+                `;
+            }
+        }
+
+        // دالة لربط مستمعي الأحداث بكل حقول الإدخال لتحديث المجموع فوراً
+        function attachInputListeners() {
+            document.querySelectorAll('[data-field="mass"], [data-field="communion"], [data-field="class"], [data-field="behavior"]').forEach(input => {
+                input.removeEventListener('input', inputHandler);
+                input.addEventListener('input', inputHandler);
+            });
+        }
+
+        function inputHandler(e) {
+            const row = e.target.closest('tr');
+            if (row) {
+                updateRowTotal(row);
+                updateDashboard();
+            }
         }
 
         async function init() {
@@ -315,7 +425,6 @@
         }
 
         async function loadServantView() {
-            // جلب الطلاب
             const { data: stds, error } = await supabaseClient
                 .from('students')
                 .select('*')
@@ -323,10 +432,8 @@
                 .eq('active', true);
             students = stds || [];
 
-            // جلب سجلات الحضور لليوم (اختياري)
             const today = getTodayDate();
             attendanceRecords = await fetchAttendanceForDate(currentClassId, today);
-
             renderAttendanceTable(today);
         }
 
@@ -365,13 +472,8 @@
         }
 
         function renderAttendanceTable(selectedDate) {
-            // حساب إحصائيات بسيطة
-            const totalStudents = students.length;
-            const presentCount = attendanceRecords.filter(r => r.mass_grade === 10 && r.communion_grade === 10 && r.class_grade === 10).length; // مثال بسيط للحضور الكامل
-
             let rows = '';
             students.forEach(s => {
-                // البحث عن سجل هذا الطالب في attendanceRecords
                 const record = attendanceRecords.find(r => r.student_id === s.id);
                 const mass = record ? record.mass_grade : 0;
                 const communion = record ? record.communion_grade : 0;
@@ -379,13 +481,11 @@
                 const behavior = record ? record.behavior_grade : 0;
                 const notes = record ? record.notes || '' : '';
                 const total = mass + communion + classGrade + behavior;
-
-                // إشعار بسيط للغياب المتكرر (مثال: إذا كان total=0)
-                const warning = (total === 0) ? '<span class="absent-warning">⚠️ غائب</span>' : '';
+                const warning = (total === 0) ? ' <span class="absent-warning">⚠️ غائب</span>' : '';
 
                 rows += `
                     <tr>
-                        <td>${s.name} ${warning}</td>
+                        <td>${s.name}${warning}</td>
                         <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="mass" value="${mass}"></td>
                         <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="communion" value="${communion}"></td>
                         <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="class" value="${classGrade}"></td>
@@ -411,25 +511,11 @@
                         <div class="logo">${currentUser?.classes?.class_name || 'الفصل'}</div>
                         <button class="btn" id="logoutBtn">تسجيل خروج</button>
                     </div>
-
-                    <!-- شريط التاريخ -->
                     <div class="date-bar">
                         <label>📅 التاريخ:</label>
                         <input type="date" id="attendanceDate" value="${selectedDate}">
                     </div>
-
-                    <!-- لوحة إحصائيات بسيطة (Dashboard مصغر) -->
-                    <div class="dashboard-summary">
-                        <div class="stat-card">
-                            <h4>عدد الطلاب</h4>
-                            <div class="value">${totalStudents}</div>
-                        </div>
-                        <div class="stat-card">
-                            <h4>الحضور الكامل</h4>
-                            <div class="value">${presentCount}</div>
-                        </div>
-                    </div>
-
+                    <div class="dashboard-summary"></div>
                     <div class="table-wrapper">
                         <table>
                             <thead>
@@ -452,23 +538,23 @@
                     <div id="message"></div>
                 </div>
             `;
+
+            // ربط مستمعي الأحداث للحقول
+            attachInputListeners();
+
+            // تحديث لوحة الإحصائيات
+            updateDashboard();
+
             document.getElementById('logoutBtn').addEventListener('click', logout);
             document.getElementById('saveAttendance').addEventListener('click', () => saveAttendance(currentClassId));
-            document.getElementById('attendanceDate').addEventListener('change', (e) => {
-                // عند تغيير التاريخ، نعيد جلب السجلات لذلك اليوم
+            document.getElementById('attendanceDate').addEventListener('change', async (e) => {
                 const newDate = e.target.value;
-                fetchAttendanceForDate(currentClassId, newDate).then(records => {
-                    attendanceRecords = records;
-                    renderAttendanceTable(newDate);
-                });
+                attendanceRecords = await fetchAttendanceForDate(currentClassId, newDate);
+                renderAttendanceTable(newDate);
             });
         }
 
         function renderAttendanceTableForAdmin(classId, selectedDate) {
-            // مشابه لـ renderAttendanceTable لكن مع إبقاء dashboard
-            const totalStudents = students.length;
-            const presentCount = attendanceRecords.filter(r => r.mass_grade === 10 && r.communion_grade === 10 && r.class_grade === 10).length;
-
             let rows = '';
             students.forEach(s => {
                 const record = attendanceRecords.find(r => r.student_id === s.id);
@@ -478,11 +564,11 @@
                 const behavior = record ? record.behavior_grade : 0;
                 const notes = record ? record.notes || '' : '';
                 const total = mass + communion + classGrade + behavior;
-                const warning = (total === 0) ? '<span class="absent-warning">⚠️ غائب</span>' : '';
+                const warning = (total === 0) ? ' <span class="absent-warning">⚠️ غائب</span>' : '';
 
                 rows += `
                     <tr>
-                        <td>${s.name} ${warning}</td>
+                        <td>${s.name}${warning}</td>
                         <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="mass" value="${mass}"></td>
                         <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="communion" value="${communion}"></td>
                         <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="class" value="${classGrade}"></td>
@@ -503,24 +589,11 @@
             });
 
             document.getElementById('adminDashboard').innerHTML = `
-                <!-- شريط التاريخ -->
                 <div class="date-bar">
                     <label>📅 التاريخ:</label>
                     <input type="date" id="attendanceDateAdmin" value="${selectedDate}">
                 </div>
-
-                <!-- لوحة إحصائيات -->
-                <div class="dashboard-summary">
-                    <div class="stat-card">
-                        <h4>عدد الطلاب</h4>
-                        <div class="value">${totalStudents}</div>
-                    </div>
-                    <div class="stat-card">
-                        <h4>الحضور الكامل</h4>
-                        <div class="value">${presentCount}</div>
-                    </div>
-                </div>
-
+                <div class="dashboard-summary"></div>
                 <div class="table-wrapper">
                     <table>
                         <thead>
@@ -543,13 +616,17 @@
                 <div id="message"></div>
             `;
 
+            // ربط مستمعي الأحداث للحقول
+            attachInputListeners();
+
+            // تحديث لوحة الإحصائيات
+            updateDashboard();
+
             document.getElementById('saveAttendanceAdmin').addEventListener('click', () => saveAttendance(classId));
-            document.getElementById('attendanceDateAdmin').addEventListener('change', (e) => {
+            document.getElementById('attendanceDateAdmin').addEventListener('change', async (e) => {
                 const newDate = e.target.value;
-                fetchAttendanceForDate(classId, newDate).then(records => {
-                    attendanceRecords = records;
-                    renderAttendanceTableForAdmin(classId, newDate);
-                });
+                attendanceRecords = await fetchAttendanceForDate(classId, newDate);
+                renderAttendanceTableForAdmin(classId, newDate);
             });
         }
 
@@ -589,7 +666,6 @@
                 });
             }
 
-            // نستخدم upsert لتجنب التكرار (إذا كان السجل موجوداً سيتم تحديثه)
             let hasError = false;
             for (let rec of records) {
                 const { error } = await supabaseClient.from('attendance').upsert(rec, { onConflict: 'student_id, date' });
@@ -606,7 +682,7 @@
                 msgDiv.innerHTML = '<div class="message success">تم حفظ الحضور بنجاح</div>';
                 // تحديث attendanceRecords بعد الحفظ
                 attendanceRecords = await fetchAttendanceForDate(classId, selectedDate);
-                // إعادة رسم الجدول (اختياري)
+                // إعادة رسم الجدول
                 if (classIdForAdmin) {
                     renderAttendanceTableForAdmin(classId, selectedDate);
                 } else {
@@ -620,7 +696,7 @@
             init();
         }
 
-        console.log('الملف الجديد يعمل');
+        console.log('الملف الجديد يعمل مع التحديث التلقائي');
         init();
     </script>
 </body>
