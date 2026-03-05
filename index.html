@@ -127,7 +127,8 @@
         const SUPABASE_ANON_KEY = 'sb_publishable_qqYzdEF5y0fJwtL_-1ZHBQ_EUYPS3JC';
         // ---------------------------------------------------------------------
 
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // استخدام اسم مختلف لتجنب التعارض مع window.supabase
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let currentUser = null;
         let currentClassId = null;
@@ -136,10 +137,10 @@
         const app = document.getElementById('app');
 
         async function init() {
-            const { data: { session }, error } = await supabase.auth.getSession();
+            const { data: { session }, error } = await supabaseClient.auth.getSession();
             if (session?.user) {
                 // ✅ استعلام صحيح مع جلب بيانات الفصل المرتبط
-                const { data: userData, error: userError } = await supabase
+                const { data: userData, error: userError } = await supabaseClient
                     .from('users')
                     .select('*, classes(id, class_name)')
                     .eq('id', session.user.id)
@@ -174,7 +175,7 @@
             document.getElementById('loginBtn').addEventListener('click', async () => {
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
-                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
                 if (error) {
                     document.getElementById('loginMessage').innerHTML = `<div class="message error">${error.message}</div>`;
                 } else {
@@ -184,7 +185,7 @@
         }
 
         async function loadServantView() {
-            const { data: stds, error } = await supabase
+            const { data: stds, error } = await supabaseClient
                 .from('students')
                 .select('*')
                 .eq('class_id', currentClassId)
@@ -194,7 +195,7 @@
         }
 
         async function loadAdminView() {
-            const { data: classes, error } = await supabase.from('classes').select('*');
+            const { data: classes, error } = await supabaseClient.from('classes').select('*');
             let options = '<option value="">اختر الفصل</option>';
             classes.forEach(cls => {
                 options += `<option value="${cls.id}">${cls.class_name}</option>`;
@@ -216,7 +217,7 @@
             document.getElementById('classSelect').addEventListener('change', async (e) => {
                 const classId = e.target.value;
                 if (classId) {
-                    const { data: stds } = await supabase.from('students').select('*').eq('class_id', classId).eq('active', true);
+                    const { data: stds } = await supabaseClient.from('students').select('*').eq('class_id', classId).eq('active', true);
                     students = stds || [];
                     renderAttendanceTableForAdmin(classId);
                 } else {
@@ -361,7 +362,7 @@
 
             let hasError = false;
             for (let rec of records) {
-                const { error } = await supabase.from('attendance').insert(rec);
+                const { error } = await supabaseClient.from('attendance').insert(rec);
                 if (error) {
                     console.error(error);
                     hasError = true;
@@ -376,12 +377,14 @@
         }
 
         async function logout() {
-            await supabase.auth.signOut();
+            await supabaseClient.auth.signOut();
             init();
         }
+
+        // رسالة تأكيد أن الملف الجديد يعمل
+        console.log('الملف الجديد يعمل');
 
         init();
     </script>
 </body>
 </html>
-console.log('🔥 الملف الجديد يعمل');
