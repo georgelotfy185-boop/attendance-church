@@ -64,6 +64,12 @@
         .btn-success:hover {
             background: #059669;
         }
+        .btn-warning {
+            background: #f59e0b;
+        }
+        .btn-warning:hover {
+            background: #d97706;
+        }
         .login-form {
             max-width: 380px;
             margin: 30px auto;
@@ -88,6 +94,27 @@
         .login-form input:focus {
             border-color: #1e3a8a;
             outline: none;
+        }
+        .date-bar {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 16px;
+            flex-wrap: wrap;
+        }
+        .date-bar label {
+            font-weight: 600;
+            color: #374151;
+        }
+        .date-bar input[type="date"] {
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            font-size: 16px;
+            background: white;
         }
         .date-range {
             display: flex;
@@ -259,11 +286,13 @@
         let currentUser = null;
         let currentClassId = null;
         let students = [];
-        let attendanceRecords = []; // سجلات الحضور للفترة الحالية
+        let attendanceRecords = [];
 
         const app = document.getElementById('app');
 
-        // دالة للحصول على تاريخ اليوم
+        // حالة العرض: 'daily' أو 'report'
+        let viewMode = 'daily';
+
         function getTodayDate() {
             const today = new Date();
             const yyyy = today.getFullYear();
@@ -272,7 +301,6 @@
             return `${yyyy}-${mm}-${dd}`;
         }
 
-        // دالة للحصول على تاريخ قبل 21 يوماً (ثلاثة أسابيع)
         function getThreeWeeksAgo() {
             const date = new Date();
             date.setDate(date.getDate() - 21);
@@ -282,7 +310,21 @@
             return `${yyyy}-${mm}-${dd}`;
         }
 
-        // دالة لجلب سجلات الحضور لنطاق تاريخي
+        async function fetchAttendanceForDate(classId, date) {
+            if (!classId || !students.length) return [];
+            const studentIds = students.map(s => s.id);
+            const { data, error } = await supabaseClient
+                .from('attendance')
+                .select('*')
+                .in('student_id', studentIds)
+                .eq('date', date);
+            if (error) {
+                console.error('Error fetching attendance:', error);
+                return [];
+            }
+            return data || [];
+        }
+
         async function fetchAttendanceForDateRange(classId, startDate, endDate) {
             if (!classId || !students.length) return [];
             const studentIds = students.map(s => s.id);
@@ -294,13 +336,12 @@
                 .lte('date', endDate)
                 .order('date', { ascending: true });
             if (error) {
-                console.error('Error fetching attendance:', error);
+                console.error('Error fetching attendance range:', error);
                 return [];
             }
             return data || [];
         }
 
-        // دالة لحساب المجموع لطالب بناءً على قيم الحقول (لصف واحد)
         function calculateTotalFromRow(row) {
             const mass = parseInt(row.querySelector('[data-field="mass"]')?.value) || 0;
             const communion = parseInt(row.querySelector('[data-field="communion"]')?.value) || 0;
@@ -309,14 +350,12 @@
             return mass + communion + classGrade + behavior;
         }
 
-        // دالة لتحديث المجموع في صف معين وإظهار/إخفاء تحذير الغياب
         function updateRowTotal(row) {
             const totalCell = row.querySelector('.total-grade');
             if (!totalCell) return;
             const total = calculateTotalFromRow(row);
             totalCell.textContent = total;
 
-            // تحديث تحذير الغياب إذا كان المجموع صفر
             const nameCell = row.cells[0];
             let warningSpan = nameCell.querySelector('.absent-warning');
             if (total === 0) {
@@ -329,18 +368,15 @@
             }
         }
 
-        // دالة لحساب الإحصائيات للفترة
-        function updateDashboard() {
+        function updateDashboard(records) {
             const totalStudents = students.length;
-            let presentCount = 0; // عدد الحضور الكامل في آخر يوم في الفترة (للتبسيط نأخذ آخر يوم)
-            let massCount = 0;
-            let communionCount = 0;
-            let classCount = 0;
+            let presentCount = 0, massCount = 0, communionCount = 0, classCount = 0;
 
-            // نأخذ آخر تاريخ في الفترة (يمكن تحسينها لاحقاً)
-            if (attendanceRecords.length > 0) {
-                const lastDate = attendanceRecords[attendanceRecords.length - 1].date;
-                const lastDayRecords = attendanceRecords.filter(r => r.date === lastDate);
+            if (records.length > 0) {
+                // نأخذ آخر تاريخ في السجلات
+                const dates = [...new Set(records.map(r => r.date))].sort();
+                const lastDate = dates[dates.length - 1];
+                const lastDayRecords = records.filter(r => r.date === lastDate);
                 lastDayRecords.forEach(rec => {
                     if (rec.mass_grade === 10) massCount++;
                     if (rec.communion_grade === 10) communionCount++;
@@ -376,7 +412,6 @@
             }
         }
 
-        // دالة لربط مستمعي الأحداث للحقول
         function attachInputListeners() {
             document.querySelectorAll('[data-field="mass"], [data-field="communion"], [data-field="class"], [data-field="behavior"]').forEach(input => {
                 input.removeEventListener('input', inputHandler);
@@ -388,59 +423,39 @@
             const row = e.target.closest('tr');
             if (row) {
                 updateRowTotal(row);
-                // تحديث dashboard بعد تغيير القيم (اختياري)
-                // updateDashboard(); // قد يكون مكلفاً، نتركه للحفظ
             }
         }
 
-        // دالة لتصدير البيانات إلى Excel
-        function exportToExcel() {
-            // تجهيز البيانات
-            const wsData = [];
-            // عنوان الجدول
-            const headers = ['الاسم', 'القداس (0/10)', 'التناول (0/10)', 'حضور الخدمة (0/10)', 'السلوك (0-5)', 'ملاحظات', 'المجموع'];
-            wsData.push(headers);
-
-            // صفوف البيانات
-            const rows = document.querySelectorAll('tbody tr');
-            rows.forEach(row => {
-                const name = row.cells[0].childNodes[0]?.nodeValue?.trim() || ''; // نأخذ النص الأول (بدون التحذيرات)
-                const mass = row.querySelector('[data-field="mass"]')?.value || 0;
-                const communion = row.querySelector('[data-field="communion"]')?.value || 0;
-                const classGrade = row.querySelector('[data-field="class"]')?.value || 0;
-                const behavior = row.querySelector('[data-field="behavior"]')?.value || 0;
-                const notes = row.querySelector('[data-field="notes"]')?.value || '';
-                const total = row.querySelector('.total-grade')?.textContent || 0;
-                wsData.push([name, mass, communion, classGrade, behavior, notes, total]);
+        function exportToExcel(data, filename) {
+            const wsData = [['الاسم', 'التاريخ', 'القداس', 'التناول', 'الخدمة', 'السلوك', 'ملاحظات', 'المجموع']];
+            data.forEach(rec => {
+                wsData.push([
+                    rec.student_name,
+                    rec.date,
+                    rec.mass_grade,
+                    rec.communion_grade,
+                    rec.class_grade,
+                    rec.behavior_grade,
+                    rec.notes,
+                    rec.mass_grade + rec.communion_grade + rec.class_grade + rec.behavior_grade
+                ]);
             });
-
-            // إنشاء ورقة عمل
             const wb = XLSX.utils.book_new();
             const ws = XLSX.utils.aoa_to_sheet(wsData);
             XLSX.utils.book_append_sheet(wb, ws, 'تقرير الحضور');
-            // تحميل الملف
-            const fileName = `تقرير_${currentUser?.classes?.class_name || 'الفصل'}_${new Date().toLocaleDateString()}.xlsx`;
-            XLSX.writeFile(wb, fileName);
+            XLSX.writeFile(wb, filename);
         }
 
-        // دالة للتحقق من الغياب المتكرر (مرتين متتاليتين)
-        function hasRepeatedAbsence(studentId, attendanceList) {
-            // نحتاج سجلات الطالب مرتبة حسب التاريخ
-            const studentRecords = attendanceList
+        function hasRepeatedAbsence(studentId, records) {
+            const studentRecords = records
                 .filter(r => r.student_id === studentId)
                 .sort((a, b) => new Date(a.date) - new Date(b.date));
-
-            // نبحث عن أي سجلين متتاليين يكون فيهما total = 0 (أو يمكننا اعتبار غياب إذا كانت mass=0)
-            // سنعتبر غياباً إذا كانت mass=0 و communion=0 و class=0 (أو يمكن تعديل المعايير)
             for (let i = 0; i < studentRecords.length - 1; i++) {
                 const r1 = studentRecords[i];
                 const r2 = studentRecords[i+1];
                 const total1 = (r1.mass_grade || 0) + (r1.communion_grade || 0) + (r1.class_grade || 0) + (r1.behavior_grade || 0);
                 const total2 = (r2.mass_grade || 0) + (r2.communion_grade || 0) + (r2.class_grade || 0) + (r2.behavior_grade || 0);
-                // نعتبر غائباً إذا كان المجموع أقل من 10 مثلاً (أو 0)
-                if (total1 === 0 && total2 === 0) {
-                    return true;
-                }
+                if (total1 === 0 && total2 === 0) return true;
             }
             return false;
         }
@@ -499,13 +514,8 @@
                 .eq('class_id', currentClassId)
                 .eq('active', true);
             students = stds || [];
-
-            // تعيين نطاق تاريخ افتراضي: آخر 21 يوماً
-            const endDate = getTodayDate();
-            const startDate = getThreeWeeksAgo();
-
-            attendanceRecords = await fetchAttendanceForDateRange(currentClassId, startDate, endDate);
-            renderAttendanceTable(startDate, endDate);
+            viewMode = 'daily';
+            renderDailyView();
         }
 
         async function loadAdminView() {
@@ -524,7 +534,7 @@
                         <label>اختر الفصل: </label>
                         <select id="classSelect" style="padding:8px; border-radius:12px; margin-right:10px;">${options}</select>
                     </div>
-                    <div id="adminDashboard"></div>
+                    <div id="adminContent"></div>
                 </div>
             `;
             document.getElementById('logoutBtn').addEventListener('click', logout);
@@ -533,87 +543,90 @@
                 if (classId) {
                     const { data: stds } = await supabaseClient.from('students').select('*').eq('class_id', classId).eq('active', true);
                     students = stds || [];
-                    const endDate = getTodayDate();
-                    const startDate = getThreeWeeksAgo();
-                    attendanceRecords = await fetchAttendanceForDateRange(classId, startDate, endDate);
-                    renderAttendanceTableForAdmin(classId, startDate, endDate);
+                    viewMode = 'daily';
+                    renderDailyAdminView(classId);
                 } else {
-                    document.getElementById('adminDashboard').innerHTML = '';
+                    document.getElementById('adminContent').innerHTML = '';
                 }
             });
         }
 
-        function renderAttendanceTable(startDate, endDate) {
-            // بناء الجدول مع عرض إجمالي لكل طالب خلال الفترة (نعرض آخر يوم أو نعرض كل يوم؟)
-            // هنا سنعرض جدولاً لكل طالب مع درجاته في كل تاريخ خلال الفترة (أكثر تفصيلاً)
-            // لكن الواجهة الحالية تعرض صفاً واحداً لكل طالب بدرجات يوم واحد. لتقرير الفترة، الأفضل عرض جدولين أو تقرير منفصل.
-            // سنقوم بإنشاء تقرير موجز: نعرض لكل طالب متوسط درجاته أو إجمالي حضور.
-            // ولكن لتبسيط، سأعرض جدولاً بكل الأيام (لكل طالب صف لكل يوم). هذا قد يكون طويلاً.
-            // بدلاً من ذلك، سأعرض لكل طالب صفاً واحداً يوضح عدد مرات الحضور ومتوسط الدرجات.
-            // هذا يتطلب تغيير بنية الجدول. ولكن التحديد المطلوب هو "تقرير حضور لثلاثة أسابيع"، فالأفضل عرض جدول بالمخدومين وتفاصيلهم لكل يوم.
+        // واجهة التسجيل اليومي (للخادم)
+        async function renderDailyView() {
+            const today = getTodayDate();
+            attendanceRecords = await fetchAttendanceForDate(currentClassId, today);
+            renderDailyTable(today);
+        }
 
-            // سأقوم بعمل تقرير بحيث يكون لكل طالب صف، ولكل يوم عمود. هذا أكثر تعقيداً.
-            // نظراً للوقت، سأعرض الجدول التقليدي (يوم واحد) مع إضافة إمكانية تغيير النطاق وعرض إجمالي الفترة في dashboard.
-            // ثم يمكن للمستخدم تصدير Excel الذي سيحتوي على كل السجلات.
+        // واجهة التسجيل اليومي (للأدمن بعد اختيار الفصل)
+        async function renderDailyAdminView(classId) {
+            const today = getTodayDate();
+            attendanceRecords = await fetchAttendanceForDate(classId, today);
+            renderDailyTableAdmin(classId, today);
+        }
 
-            // سنقوم بإنشاء جدول يعرض جميع سجلات الفترة (لكل طالب عدة أسطر)
-            // هذا سيكون أكثر فائدة.
+        // واجهة التقارير (للخادم)
+        async function renderReportView() {
+            const endDate = getTodayDate();
+            const startDate = getThreeWeeksAgo();
+            attendanceRecords = await fetchAttendanceForDateRange(currentClassId, startDate, endDate);
+            renderReportTable(startDate, endDate);
+        }
 
-            // تجميع التواريخ الفريدة
-            const dates = [...new Set(attendanceRecords.map(r => r.date))].sort();
+        // واجهة التقارير (للأدمن)
+        async function renderReportAdminView(classId) {
+            const endDate = getTodayDate();
+            const startDate = getThreeWeeksAgo();
+            attendanceRecords = await fetchAttendanceForDateRange(classId, startDate, endDate);
+            renderReportTableAdmin(classId, startDate, endDate);
+        }
 
+        function renderDailyTable(selectedDate) {
             let rows = '';
             students.forEach(s => {
-                const studentRecords = attendanceRecords.filter(r => r.student_id === s.id);
-                if (studentRecords.length === 0) {
-                    // لا توجد سجلات للطالب في الفترة
-                    rows += `<tr><td colspan="7" style="text-align:right;">${s.name} - لا توجد بيانات</td></tr>`;
-                } else {
-                    studentRecords.sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(rec => {
-                        const mass = rec.mass_grade || 0;
-                        const communion = rec.communion_grade || 0;
-                        const classGrade = rec.class_grade || 0;
-                        const behavior = rec.behavior_grade || 0;
-                        const notes = rec.notes || '';
-                        const total = mass + communion + classGrade + behavior;
-                        const repeated = hasRepeatedAbsence(s.id, attendanceRecords) ? ' <span class="repeated-absence">⚠️ غاب مرتين</span>' : '';
-                        rows += `
-                            <tr>
-                                <td>${s.name}${repeated}</td>
-                                <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="mass" value="${mass}" data-date="${rec.date}"></td>
-                                <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="communion" value="${communion}" data-date="${rec.date}"></td>
-                                <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="class" value="${classGrade}" data-date="${rec.date}"></td>
-                                <td>
-                                    <select class="behavior-select" data-id="${s.id}" data-field="behavior" data-date="${rec.date}">
-                                        <option value="0" ${behavior === 0 ? 'selected' : ''}>0</option>
-                                        <option value="1" ${behavior === 1 ? 'selected' : ''}>1</option>
-                                        <option value="2" ${behavior === 2 ? 'selected' : ''}>2</option>
-                                        <option value="3" ${behavior === 3 ? 'selected' : ''}>3</option>
-                                        <option value="4" ${behavior === 4 ? 'selected' : ''}>4</option>
-                                        <option value="5" ${behavior === 5 ? 'selected' : ''}>5</option>
-                                    </select>
-                                </td>
-                                <td><input type="text" class="grade-input" data-id="${s.id}" data-field="notes" placeholder="..." value="${notes}" data-date="${rec.date}"></td>
-                                <td class="total-grade">${total}</td>
-                            </tr>
-                        `;
-                    });
-                }
+                const record = attendanceRecords.find(r => r.student_id === s.id);
+                const mass = record ? record.mass_grade : 0;
+                const communion = record ? record.communion_grade : 0;
+                const classGrade = record ? record.class_grade : 0;
+                const behavior = record ? record.behavior_grade : 0;
+                const notes = record ? record.notes || '' : '';
+                const total = mass + communion + classGrade + behavior;
+                const warning = (total === 0) ? ' <span class="absent-warning">⚠️ غائب</span>' : '';
+
+                rows += `
+                    <tr>
+                        <td>${s.name}${warning}</td>
+                        <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="mass" value="${mass}"></td>
+                        <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="communion" value="${communion}"></td>
+                        <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="class" value="${classGrade}"></td>
+                        <td>
+                            <select class="behavior-select" data-id="${s.id}" data-field="behavior">
+                                <option value="0" ${behavior === 0 ? 'selected' : ''}>0</option>
+                                <option value="1" ${behavior === 1 ? 'selected' : ''}>1</option>
+                                <option value="2" ${behavior === 2 ? 'selected' : ''}>2</option>
+                                <option value="3" ${behavior === 3 ? 'selected' : ''}>3</option>
+                                <option value="4" ${behavior === 4 ? 'selected' : ''}>4</option>
+                                <option value="5" ${behavior === 5 ? 'selected' : ''}>5</option>
+                            </select>
+                        </td>
+                        <td><input type="text" class="grade-input" data-id="${s.id}" data-field="notes" placeholder="..." value="${notes}"></td>
+                        <td class="total-grade">${total}</td>
+                    </tr>
+                `;
             });
 
             app.innerHTML = `
                 <div>
                     <div class="header">
                         <div class="logo">${currentUser?.classes?.class_name || 'الفصل'}</div>
-                        <button class="btn" id="logoutBtn">تسجيل خروج</button>
+                        <div>
+                            <button class="btn btn-warning" id="reportBtn">📊 التقارير</button>
+                            <button class="btn" id="logoutBtn">تسجيل خروج</button>
+                        </div>
                     </div>
-                    <div class="date-range">
-                        <label>من تاريخ:</label>
-                        <input type="date" id="startDate" value="${startDate}">
-                        <label>إلى تاريخ:</label>
-                        <input type="date" id="endDate" value="${endDate}">
-                        <button class="btn" id="fetchRangeBtn">عرض</button>
-                        <button class="btn btn-success" id="exportExcelBtn">📥 تصدير Excel</button>
+                    <div class="date-bar">
+                        <label>📅 التاريخ:</label>
+                        <input type="date" id="attendanceDate" value="${selectedDate}">
                     </div>
                     <div class="dashboard-summary"></div>
                     <div class="table-wrapper">
@@ -634,37 +647,125 @@
                             </tbody>
                         </table>
                     </div>
-                    <button class="save-btn" id="saveAttendance">حفظ التعديلات</button>
+                    <button class="save-btn" id="saveAttendance">حفظ الحضور</button>
                     <div id="message"></div>
                 </div>
             `;
 
-            // تحديث dashboard
-            updateDashboard();
-
-            // ربط الأحداث
-            document.getElementById('logoutBtn').addEventListener('click', logout);
-            document.getElementById('fetchRangeBtn').addEventListener('click', async () => {
-                const newStart = document.getElementById('startDate').value;
-                const newEnd = document.getElementById('endDate').value;
-                attendanceRecords = await fetchAttendanceForDateRange(currentClassId, newStart, newEnd);
-                renderAttendanceTable(newStart, newEnd);
-            });
-            document.getElementById('exportExcelBtn').addEventListener('click', exportToExcel);
-            document.getElementById('saveAttendance').addEventListener('click', () => saveAttendance(currentClassId));
-
+            updateDashboard(attendanceRecords);
             attachInputListeners();
+
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('reportBtn').addEventListener('click', async () => {
+                viewMode = 'report';
+                await renderReportView();
+            });
+            document.getElementById('saveAttendance').addEventListener('click', () => saveDailyAttendance(currentClassId, selectedDate));
+            document.getElementById('attendanceDate').addEventListener('change', async (e) => {
+                const newDate = e.target.value;
+                attendanceRecords = await fetchAttendanceForDate(currentClassId, newDate);
+                renderDailyTable(newDate);
+            });
         }
 
-        function renderAttendanceTableForAdmin(classId, startDate, endDate) {
-            // مشابه للدالة السابقة ولكن مع عرض في adminDashboard
-            const dates = [...new Set(attendanceRecords.map(r => r.date))].sort();
+        function renderDailyTableAdmin(classId, selectedDate) {
+            let rows = '';
+            students.forEach(s => {
+                const record = attendanceRecords.find(r => r.student_id === s.id);
+                const mass = record ? record.mass_grade : 0;
+                const communion = record ? record.communion_grade : 0;
+                const classGrade = record ? record.class_grade : 0;
+                const behavior = record ? record.behavior_grade : 0;
+                const notes = record ? record.notes || '' : '';
+                const total = mass + communion + classGrade + behavior;
+                const warning = (total === 0) ? ' <span class="absent-warning">⚠️ غائب</span>' : '';
+
+                rows += `
+                    <tr>
+                        <td>${s.name}${warning}</td>
+                        <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="mass" value="${mass}"></td>
+                        <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="communion" value="${communion}"></td>
+                        <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="class" value="${classGrade}"></td>
+                        <td>
+                            <select class="behavior-select" data-id="${s.id}" data-field="behavior">
+                                <option value="0" ${behavior === 0 ? 'selected' : ''}>0</option>
+                                <option value="1" ${behavior === 1 ? 'selected' : ''}>1</option>
+                                <option value="2" ${behavior === 2 ? 'selected' : ''}>2</option>
+                                <option value="3" ${behavior === 3 ? 'selected' : ''}>3</option>
+                                <option value="4" ${behavior === 4 ? 'selected' : ''}>4</option>
+                                <option value="5" ${behavior === 5 ? 'selected' : ''}>5</option>
+                            </select>
+                        </td>
+                        <td><input type="text" class="grade-input" data-id="${s.id}" data-field="notes" placeholder="..." value="${notes}"></td>
+                        <td class="total-grade">${total}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('adminContent').innerHTML = `
+                <div>
+                    <div class="header" style="border-bottom: none;">
+                        <div class="logo">${students.length ? 'تسجيل يومي' : ''}</div>
+                        <div>
+                            <button class="btn btn-warning" id="reportAdminBtn">📊 التقارير</button>
+                        </div>
+                    </div>
+                    <div class="date-bar">
+                        <label>📅 التاريخ:</label>
+                        <input type="date" id="attendanceDateAdmin" value="${selectedDate}">
+                    </div>
+                    <div class="dashboard-summary"></div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>الاسم</th>
+                                    <th>القداس (0/10)</th>
+                                    <th>التناول (0/10)</th>
+                                    <th>حضور الخدمة (0/10)</th>
+                                    <th>السلوك (0-5)</th>
+                                    <th>ملاحظات</th>
+                                    <th>المجموع</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rows}
+                            </tbody>
+                        </table>
+                    </div>
+                    <button class="save-btn" id="saveAttendanceAdmin">حفظ الحضور</button>
+                    <div id="message"></div>
+                </div>
+            `;
+
+            updateDashboard(attendanceRecords);
+            attachInputListeners();
+
+            document.getElementById('reportAdminBtn').addEventListener('click', async () => {
+                viewMode = 'report';
+                await renderReportAdminView(classId);
+            });
+            document.getElementById('saveAttendanceAdmin').addEventListener('click', () => saveDailyAttendance(classId, selectedDate));
+            document.getElementById('attendanceDateAdmin').addEventListener('change', async (e) => {
+                const newDate = e.target.value;
+                attendanceRecords = await fetchAttendanceForDate(classId, newDate);
+                renderDailyTableAdmin(classId, newDate);
+            });
+        }
+
+        function renderReportTable(startDate, endDate) {
+            // تجهيز بيانات التقرير مع أسماء الطلاب
+            const studentMap = new Map(students.map(s => [s.id, s.name]));
+            const reportData = attendanceRecords.map(rec => ({
+                ...rec,
+                student_name: studentMap.get(rec.student_id) || 'غير معروف'
+            }));
 
             let rows = '';
             students.forEach(s => {
                 const studentRecords = attendanceRecords.filter(r => r.student_id === s.id);
                 if (studentRecords.length === 0) {
-                    rows += `<tr><td colspan="7" style="text-align:right;">${s.name} - لا توجد بيانات</td></tr>`;
+                    rows += `<tr><td colspan="8" style="text-align:right;">${s.name} - لا توجد بيانات</td></tr>`;
                 } else {
                     studentRecords.sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(rec => {
                         const mass = rec.mass_grade || 0;
@@ -677,20 +778,12 @@
                         rows += `
                             <tr>
                                 <td>${s.name}${repeated}</td>
-                                <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="mass" value="${mass}" data-date="${rec.date}"></td>
-                                <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="communion" value="${communion}" data-date="${rec.date}"></td>
-                                <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="class" value="${classGrade}" data-date="${rec.date}"></td>
-                                <td>
-                                    <select class="behavior-select" data-id="${s.id}" data-field="behavior" data-date="${rec.date}">
-                                        <option value="0" ${behavior === 0 ? 'selected' : ''}>0</option>
-                                        <option value="1" ${behavior === 1 ? 'selected' : ''}>1</option>
-                                        <option value="2" ${behavior === 2 ? 'selected' : ''}>2</option>
-                                        <option value="3" ${behavior === 3 ? 'selected' : ''}>3</option>
-                                        <option value="4" ${behavior === 4 ? 'selected' : ''}>4</option>
-                                        <option value="5" ${behavior === 5 ? 'selected' : ''}>5</option>
-                                    </select>
-                                </td>
-                                <td><input type="text" class="grade-input" data-id="${s.id}" data-field="notes" placeholder="..." value="${notes}" data-date="${rec.date}"></td>
+                                <td>${rec.date}</td>
+                                <td>${mass}</td>
+                                <td>${communion}</td>
+                                <td>${classGrade}</td>
+                                <td>${behavior}</td>
+                                <td>${notes}</td>
                                 <td class="total-grade">${total}</td>
                             </tr>
                         `;
@@ -698,82 +791,203 @@
                 }
             });
 
-            document.getElementById('adminDashboard').innerHTML = `
-                <div class="date-range">
-                    <label>من تاريخ:</label>
-                    <input type="date" id="startDateAdmin" value="${startDate}">
-                    <label>إلى تاريخ:</label>
-                    <input type="date" id="endDateAdmin" value="${endDate}">
-                    <button class="btn" id="fetchRangeAdminBtn">عرض</button>
-                    <button class="btn btn-success" id="exportExcelAdminBtn">📥 تصدير Excel</button>
+            app.innerHTML = `
+                <div>
+                    <div class="header">
+                        <div class="logo">${currentUser?.classes?.class_name || 'الفصل'} - تقرير</div>
+                        <div>
+                            <button class="btn" id="backToDailyBtn">🔙 العودة للتسجيل</button>
+                            <button class="btn" id="logoutBtn">تسجيل خروج</button>
+                        </div>
+                    </div>
+                    <div class="date-range">
+                        <label>من تاريخ:</label>
+                        <input type="date" id="startDate" value="${startDate}">
+                        <label>إلى تاريخ:</label>
+                        <input type="date" id="endDate" value="${endDate}">
+                        <button class="btn" id="fetchRangeBtn">عرض</button>
+                        <button class="btn btn-success" id="exportExcelBtn">📥 تصدير Excel</button>
+                    </div>
+                    <div class="dashboard-summary"></div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>الاسم</th>
+                                    <th>التاريخ</th>
+                                    <th>القداس</th>
+                                    <th>التناول</th>
+                                    <th>الخدمة</th>
+                                    <th>السلوك</th>
+                                    <th>ملاحظات</th>
+                                    <th>المجموع</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rows}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="message"></div>
                 </div>
-                <div class="dashboard-summary"></div>
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>الاسم</th>
-                                <th>القداس (0/10)</th>
-                                <th>التناول (0/10)</th>
-                                <th>حضور الخدمة (0/10)</th>
-                                <th>السلوك (0-5)</th>
-                                <th>ملاحظات</th>
-                                <th>المجموع</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${rows}
-                        </tbody>
-                    </table>
-                </div>
-                <button class="save-btn" id="saveAttendanceAdmin">حفظ التعديلات</button>
-                <div id="message"></div>
             `;
 
-            updateDashboard();
+            updateDashboard(attendanceRecords);
 
+            document.getElementById('backToDailyBtn').addEventListener('click', async () => {
+                viewMode = 'daily';
+                await renderDailyView();
+            });
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('fetchRangeBtn').addEventListener('click', async () => {
+                const newStart = document.getElementById('startDate').value;
+                const newEnd = document.getElementById('endDate').value;
+                attendanceRecords = await fetchAttendanceForDateRange(currentClassId, newStart, newEnd);
+                renderReportTable(newStart, newEnd);
+            });
+            document.getElementById('exportExcelBtn').addEventListener('click', () => {
+                const studentMap = new Map(students.map(s => [s.id, s.name]));
+                const dataForExport = attendanceRecords.map(rec => ({
+                    ...rec,
+                    student_name: studentMap.get(rec.student_id) || 'غير معروف'
+                }));
+                exportToExcel(dataForExport, `تقرير_${currentUser?.classes?.class_name}_${new Date().toLocaleDateString()}.xlsx`);
+            });
+        }
+
+        function renderReportTableAdmin(classId, startDate, endDate) {
+            const studentMap = new Map(students.map(s => [s.id, s.name]));
+            const reportData = attendanceRecords.map(rec => ({
+                ...rec,
+                student_name: studentMap.get(rec.student_id) || 'غير معروف'
+            }));
+
+            let rows = '';
+            students.forEach(s => {
+                const studentRecords = attendanceRecords.filter(r => r.student_id === s.id);
+                if (studentRecords.length === 0) {
+                    rows += `<tr><td colspan="8" style="text-align:right;">${s.name} - لا توجد بيانات</td></tr>`;
+                } else {
+                    studentRecords.sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(rec => {
+                        const mass = rec.mass_grade || 0;
+                        const communion = rec.communion_grade || 0;
+                        const classGrade = rec.class_grade || 0;
+                        const behavior = rec.behavior_grade || 0;
+                        const notes = rec.notes || '';
+                        const total = mass + communion + classGrade + behavior;
+                        const repeated = hasRepeatedAbsence(s.id, attendanceRecords) ? ' <span class="repeated-absence">⚠️ غاب مرتين</span>' : '';
+                        rows += `
+                            <tr>
+                                <td>${s.name}${repeated}</td>
+                                <td>${rec.date}</td>
+                                <td>${mass}</td>
+                                <td>${communion}</td>
+                                <td>${classGrade}</td>
+                                <td>${behavior}</td>
+                                <td>${notes}</td>
+                                <td class="total-grade">${total}</td>
+                            </tr>
+                        `;
+                    });
+                }
+            });
+
+            document.getElementById('adminContent').innerHTML = `
+                <div>
+                    <div class="header" style="border-bottom: none;">
+                        <div class="logo">تقرير الفصل</div>
+                        <div>
+                            <button class="btn" id="backToDailyAdminBtn">🔙 العودة للتسجيل</button>
+                        </div>
+                    </div>
+                    <div class="date-range">
+                        <label>من تاريخ:</label>
+                        <input type="date" id="startDateAdmin" value="${startDate}">
+                        <label>إلى تاريخ:</label>
+                        <input type="date" id="endDateAdmin" value="${endDate}">
+                        <button class="btn" id="fetchRangeAdminBtn">عرض</button>
+                        <button class="btn btn-success" id="exportExcelAdminBtn">📥 تصدير Excel</button>
+                    </div>
+                    <div class="dashboard-summary"></div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>الاسم</th>
+                                    <th>التاريخ</th>
+                                    <th>القداس</th>
+                                    <th>التناول</th>
+                                    <th>الخدمة</th>
+                                    <th>السلوك</th>
+                                    <th>ملاحظات</th>
+                                    <th>المجموع</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rows}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="message"></div>
+                </div>
+            `;
+
+            updateDashboard(attendanceRecords);
+
+            document.getElementById('backToDailyAdminBtn').addEventListener('click', async () => {
+                viewMode = 'daily';
+                await renderDailyAdminView(classId);
+            });
             document.getElementById('fetchRangeAdminBtn').addEventListener('click', async () => {
                 const newStart = document.getElementById('startDateAdmin').value;
                 const newEnd = document.getElementById('endDateAdmin').value;
                 attendanceRecords = await fetchAttendanceForDateRange(classId, newStart, newEnd);
-                renderAttendanceTableForAdmin(classId, newStart, newEnd);
+                renderReportTableAdmin(classId, newStart, newEnd);
             });
-            document.getElementById('exportExcelAdminBtn').addEventListener('click', exportToExcel);
-            document.getElementById('saveAttendanceAdmin').addEventListener('click', () => saveAttendance(classId));
-
-            attachInputListeners();
+            document.getElementById('exportExcelAdminBtn').addEventListener('click', () => {
+                const studentMap = new Map(students.map(s => [s.id, s.name]));
+                const dataForExport = attendanceRecords.map(rec => ({
+                    ...rec,
+                    student_name: studentMap.get(rec.student_id) || 'غير معروف'
+                }));
+                exportToExcel(dataForExport, `تقرير_${new Date().toLocaleDateString()}.xlsx`);
+            });
         }
 
-        async function saveAttendance(classIdForAdmin = null) {
-            const classId = classIdForAdmin || currentClassId;
-            // نحتاج إلى جمع جميع الحقول المعدلة. هنا سنقوم بجمع كل الصفوف وحفظها بناءً على التاريخ المضمن في data-date
-            const rows = document.querySelectorAll('tbody tr');
-            const updates = [];
+        async function saveDailyAttendance(classId, date) {
+            const records = [];
+            const inputs = document.querySelectorAll('[data-id]');
+            const studentMap = new Map();
 
-            rows.forEach(row => {
-                const studentId = row.querySelector('[data-field="mass"]')?.dataset.id;
-                const date = row.querySelector('[data-field="mass"]')?.dataset.date;
-                if (!studentId || !date) return;
-                const mass = parseInt(row.querySelector('[data-field="mass"]')?.value) || 0;
-                const communion = parseInt(row.querySelector('[data-field="communion"]')?.value) || 0;
-                const classGrade = parseInt(row.querySelector('[data-field="class"]')?.value) || 0;
-                const behavior = parseInt(row.querySelector('[data-field="behavior"]')?.value) || 0;
-                const notes = row.querySelector('[data-field="notes"]')?.value || '';
-
-                updates.push({
-                    student_id: studentId,
-                    date: date,
-                    mass_grade: mass,
-                    communion_grade: communion,
-                    class_grade: classGrade,
-                    behavior_grade: behavior,
-                    notes: notes,
-                    recorded_by: currentUser.id
-                });
+            inputs.forEach(inp => {
+                const studentId = inp.dataset.id;
+                const field = inp.dataset.field;
+                if (!studentMap.has(studentId)) {
+                    studentMap.set(studentId, { student_id: studentId, mass: 0, communion: 0, class: 0, behavior: 0, notes: '' });
+                }
+                const rec = studentMap.get(studentId);
+                if (field === 'mass') rec.mass = parseInt(inp.value) || 0;
+                if (field === 'communion') rec.communion = parseInt(inp.value) || 0;
+                if (field === 'class') rec.class = parseInt(inp.value) || 0;
+                if (field === 'behavior') rec.behavior = parseInt(inp.value) || 0;
+                if (field === 'notes') rec.notes = inp.value;
             });
 
+            for (let [studentId, rec] of studentMap) {
+                records.push({
+                    student_id: studentId,
+                    date: date,
+                    mass_grade: rec.mass,
+                    communion_grade: rec.communion,
+                    class_grade: rec.class,
+                    behavior_grade: rec.behavior,
+                    notes: rec.notes,
+                    recorded_by: currentUser.id
+                });
+            }
+
             let hasError = false;
-            for (let rec of updates) {
+            for (let rec of records) {
                 const { error } = await supabaseClient.from('attendance').upsert(rec, { onConflict: 'student_id, date' });
                 if (error) {
                     console.error(error);
@@ -785,18 +999,14 @@
             if (hasError) {
                 msgDiv.innerHTML = '<div class="message error">حدث خطأ أثناء الحفظ، بعض السجلات قد لا تكون محفوظة.</div>';
             } else {
-                msgDiv.innerHTML = '<div class="message success">تم حفظ التعديلات بنجاح</div>';
-                // تحديث attendanceRecords
-                const startInput = classIdForAdmin ? document.getElementById('startDateAdmin') : document.getElementById('startDate');
-                const endInput = classIdForAdmin ? document.getElementById('endDateAdmin') : document.getElementById('endDate');
-                const start = startInput ? startInput.value : getThreeWeeksAgo();
-                const end = endInput ? endInput.value : getTodayDate();
-                attendanceRecords = await fetchAttendanceForDateRange(classId, start, end);
+                msgDiv.innerHTML = '<div class="message success">تم حفظ الحضور بنجاح</div>';
+                // تحديث البيانات
+                attendanceRecords = await fetchAttendanceForDate(classId, date);
                 // إعادة رسم الجدول
-                if (classIdForAdmin) {
-                    renderAttendanceTableForAdmin(classId, start, end);
+                if (currentUser.role === 'admin') {
+                    renderDailyTableAdmin(classId, date);
                 } else {
-                    renderAttendanceTable(start, end);
+                    renderDailyTable(date);
                 }
             }
         }
@@ -806,7 +1016,7 @@
             init();
         }
 
-        console.log('الملف الجديد مع نطاق تاريخ وتصدير Excel وتحذير الغياب المتكرر');
+        console.log('الملف النهائي مع فصل التسجيل عن التقارير');
         init();
     </script>
 </body>
