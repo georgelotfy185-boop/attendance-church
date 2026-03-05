@@ -296,41 +296,31 @@
             }
         }
 
-        // دالة لحساب الإحصائيات وعرضها
+        // دالة لحساب الإحصائيات وعرضها (حسب الطلب الجديد)
         function updateDashboard() {
             const totalStudents = students.length;
-            let presentCount = 0;
-            let totalMass = 0, totalCommunion = 0, totalClass = 0, totalBehavior = 0;
-            let sumTotal = 0;
+            let presentCount = 0; // الحضور الكامل (قداس وتناول وخدمة = 10)
+            let massCount = 0;     // عدد من حصل على 10 في القداس
+            let communionCount = 0; // عدد من حصل على 10 في التناول
+            let classCount = 0;     // عدد من حصل على 10 في الخدمة
 
             document.querySelectorAll('tbody tr').forEach(row => {
                 const mass = parseInt(row.querySelector('[data-field="mass"]')?.value) || 0;
                 const communion = parseInt(row.querySelector('[data-field="communion"]')?.value) || 0;
                 const classGrade = parseInt(row.querySelector('[data-field="class"]')?.value) || 0;
-                const behavior = parseInt(row.querySelector('[data-field="behavior"]')?.value) || 0;
-                const total = mass + communion + classGrade + behavior;
 
-                totalMass += mass;
-                totalCommunion += communion;
-                totalClass += classGrade;
-                totalBehavior += behavior;
-                sumTotal += total;
-
+                if (mass === 10) massCount++;
+                if (communion === 10) communionCount++;
+                if (classGrade === 10) classCount++;
                 if (mass === 10 && communion === 10 && classGrade === 10) presentCount++;
             });
-
-            const avgMass = totalStudents ? (totalMass / totalStudents).toFixed(1) : 0;
-            const avgCommunion = totalStudents ? (totalCommunion / totalStudents).toFixed(1) : 0;
-            const avgClass = totalStudents ? (totalClass / totalStudents).toFixed(1) : 0;
-            const avgBehavior = totalStudents ? (totalBehavior / totalStudents).toFixed(1) : 0;
-            const avgTotal = totalStudents ? (sumTotal / totalStudents).toFixed(1) : 0;
 
             // تحديث لوحة الإحصائيات
             const dashboard = document.querySelector('.dashboard-summary');
             if (dashboard) {
                 dashboard.innerHTML = `
                     <div class="stat-card">
-                        <h4>عدد الطلاب</h4>
+                        <h4>عدد المخدومين</h4>
                         <div class="value">${totalStudents}</div>
                     </div>
                     <div class="stat-card">
@@ -338,24 +328,16 @@
                         <div class="value">${presentCount}</div>
                     </div>
                     <div class="stat-card">
-                        <h4>متوسط القداس</h4>
-                        <div class="value">${avgMass}</div>
+                        <h4>القداس (10)</h4>
+                        <div class="value">${massCount}</div>
                     </div>
                     <div class="stat-card">
-                        <h4>متوسط التناول</h4>
-                        <div class="value">${avgCommunion}</div>
+                        <h4>التناول (10)</h4>
+                        <div class="value">${communionCount}</div>
                     </div>
                     <div class="stat-card">
-                        <h4>متوسط الخدمة</h4>
-                        <div class="value">${avgClass}</div>
-                    </div>
-                    <div class="stat-card">
-                        <h4>متوسط السلوك</h4>
-                        <div class="value">${avgBehavior}</div>
-                    </div>
-                    <div class="stat-card">
-                        <h4>متوسط المجموع</h4>
-                        <div class="value">${avgTotal}</div>
+                        <h4>الخدمة (10)</h4>
+                        <div class="value">${classCount}</div>
                     </div>
                 `;
             }
