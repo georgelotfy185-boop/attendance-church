@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>نظام الحضور - مدارس الأحد</title>
+    <title>خدمة خمسة وستة - مدارس الأحد</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- إضافة مكتبة xlsx لتصدير Excel -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
@@ -35,7 +35,19 @@
             border-bottom: 2px solid #e5e7eb;
             padding-bottom: 15px;
         }
-        .logo {
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .logo-img {
+            height: 50px;
+            width: auto;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .logo-text {
             font-size: 24px;
             font-weight: bold;
             background: linear-gradient(135deg, #1e3a8a, #3b82f6);
@@ -196,6 +208,10 @@
             border-radius: 8px;
             font-size: 15px;
         }
+        /* منع إدخال قيم خارج النطاق */
+        .grade-input:out-of-range {
+            border: 2px solid red;
+        }
         .behavior-select {
             width: 70px;
             padding: 8px;
@@ -264,12 +280,6 @@
             background: #fee2e2;
             color: #991b1b;
         }
-        .action-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
     </style>
 </head>
 <body>
@@ -292,6 +302,9 @@
 
         // حالة العرض: 'daily' أو 'report'
         let viewMode = 'daily';
+
+        // رابط اللوجو (من الرابط المباشر الذي أرسلته)
+        const LOGO_URL = 'https://i.ibb.co/4gP3wDDV/image.png';
 
         function getTodayDate() {
             const today = new Date();
@@ -373,7 +386,6 @@
             let presentCount = 0, massCount = 0, communionCount = 0, classCount = 0;
 
             if (records.length > 0) {
-                // نأخذ آخر تاريخ في السجلات
                 const dates = [...new Set(records.map(r => r.date))].sort();
                 const lastDate = dates[dates.length - 1];
                 const lastDayRecords = records.filter(r => r.date === lastDate);
@@ -416,10 +428,27 @@
             document.querySelectorAll('[data-field="mass"], [data-field="communion"], [data-field="class"], [data-field="behavior"]').forEach(input => {
                 input.removeEventListener('input', inputHandler);
                 input.addEventListener('input', inputHandler);
+                // إضافة التحقق عند التغيير اليدوي
+                input.addEventListener('blur', validateInput);
             });
         }
 
+        function validateInput(e) {
+            const input = e.target;
+            const min = parseInt(input.min) || 0;
+            const max = parseInt(input.max) || 10;
+            let value = parseInt(input.value);
+            if (isNaN(value)) {
+                input.value = 0;
+            } else if (value < min) {
+                input.value = min;
+            } else if (value > max) {
+                input.value = max;
+            }
+        }
+
         function inputHandler(e) {
+            validateInput(e); // تصحيح القيمة فوراً
             const row = e.target.closest('tr');
             if (row) {
                 updateRowTotal(row);
@@ -527,7 +556,10 @@
             app.innerHTML = `
                 <div>
                     <div class="header">
-                        <div class="logo">نظام الحضور - الأدمن</div>
+                        <div class="logo-container">
+                            <img src="${LOGO_URL}" alt="شعار الخدمة" class="logo-img">
+                            <span class="logo-text">خدمة خمسة وستة</span>
+                        </div>
                         <button class="btn" id="logoutBtn">تسجيل خروج</button>
                     </div>
                     <div style="margin-bottom:20px;">
@@ -551,21 +583,18 @@
             });
         }
 
-        // واجهة التسجيل اليومي (للخادم)
         async function renderDailyView() {
             const today = getTodayDate();
             attendanceRecords = await fetchAttendanceForDate(currentClassId, today);
             renderDailyTable(today);
         }
 
-        // واجهة التسجيل اليومي (للأدمن بعد اختيار الفصل)
         async function renderDailyAdminView(classId) {
             const today = getTodayDate();
             attendanceRecords = await fetchAttendanceForDate(classId, today);
             renderDailyTableAdmin(classId, today);
         }
 
-        // واجهة التقارير (للخادم)
         async function renderReportView() {
             const endDate = getTodayDate();
             const startDate = getThreeWeeksAgo();
@@ -573,7 +602,6 @@
             renderReportTable(startDate, endDate);
         }
 
-        // واجهة التقارير (للأدمن)
         async function renderReportAdminView(classId) {
             const endDate = getTodayDate();
             const startDate = getThreeWeeksAgo();
@@ -618,7 +646,10 @@
             app.innerHTML = `
                 <div>
                     <div class="header">
-                        <div class="logo">${currentUser?.classes?.class_name || 'الفصل'}</div>
+                        <div class="logo-container">
+                            <img src="${LOGO_URL}" alt="شعار الخدمة" class="logo-img">
+                            <span class="logo-text">${currentUser?.classes?.class_name || 'الفصل'}</span>
+                        </div>
                         <div>
                             <button class="btn btn-warning" id="reportBtn">📊 التقارير</button>
                             <button class="btn" id="logoutBtn">تسجيل خروج</button>
@@ -705,7 +736,10 @@
             document.getElementById('adminContent').innerHTML = `
                 <div>
                     <div class="header" style="border-bottom: none;">
-                        <div class="logo">${students.length ? 'تسجيل يومي' : ''}</div>
+                        <div class="logo-container">
+                            <img src="${LOGO_URL}" alt="شعار الخدمة" class="logo-img">
+                            <span class="logo-text">${students.length ? 'تسجيل يومي' : ''}</span>
+                        </div>
                         <div>
                             <button class="btn btn-warning" id="reportAdminBtn">📊 التقارير</button>
                         </div>
@@ -754,7 +788,6 @@
         }
 
         function renderReportTable(startDate, endDate) {
-            // تجهيز بيانات التقرير مع أسماء الطلاب
             const studentMap = new Map(students.map(s => [s.id, s.name]));
             const reportData = attendanceRecords.map(rec => ({
                 ...rec,
@@ -794,7 +827,10 @@
             app.innerHTML = `
                 <div>
                     <div class="header">
-                        <div class="logo">${currentUser?.classes?.class_name || 'الفصل'} - تقرير</div>
+                        <div class="logo-container">
+                            <img src="${LOGO_URL}" alt="شعار الخدمة" class="logo-img">
+                            <span class="logo-text">${currentUser?.classes?.class_name || 'الفصل'} - تقرير</span>
+                        </div>
                         <div>
                             <button class="btn" id="backToDailyBtn">🔙 العودة للتسجيل</button>
                             <button class="btn" id="logoutBtn">تسجيل خروج</button>
@@ -895,7 +931,10 @@
             document.getElementById('adminContent').innerHTML = `
                 <div>
                     <div class="header" style="border-bottom: none;">
-                        <div class="logo">تقرير الفصل</div>
+                        <div class="logo-container">
+                            <img src="${LOGO_URL}" alt="شعار الخدمة" class="logo-img">
+                            <span class="logo-text">تقرير الفصل</span>
+                        </div>
                         <div>
                             <button class="btn" id="backToDailyAdminBtn">🔙 العودة للتسجيل</button>
                         </div>
@@ -1000,9 +1039,7 @@
                 msgDiv.innerHTML = '<div class="message error">حدث خطأ أثناء الحفظ، بعض السجلات قد لا تكون محفوظة.</div>';
             } else {
                 msgDiv.innerHTML = '<div class="message success">تم حفظ الحضور بنجاح</div>';
-                // تحديث البيانات
                 attendanceRecords = await fetchAttendanceForDate(classId, date);
-                // إعادة رسم الجدول
                 if (currentUser.role === 'admin') {
                     renderDailyTableAdmin(classId, date);
                 } else {
@@ -1016,7 +1053,7 @@
             init();
         }
 
-        console.log('الملف النهائي مع فصل التسجيل عن التقارير');
+        console.log('الملف النهائي مع اللوجو ومنع إدخال القيم الكبيرة');
         init();
     </script>
 </body>
