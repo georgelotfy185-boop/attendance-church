@@ -42,7 +42,7 @@
             flex-wrap: wrap;
         }
         .logo-img {
-            height: 70px; /* زيادة الحجم */
+            height: 70px;
             width: auto;
             border-radius: 10px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -82,6 +82,12 @@
         .btn-warning:hover {
             background: #d97706;
         }
+        .btn-info {
+            background: #3b82f6;
+        }
+        .btn-info:hover {
+            background: #1e3a8a;
+        }
         .login-form {
             max-width: 400px;
             margin: 20px auto;
@@ -108,28 +114,7 @@
             border-color: #1e3a8a;
             outline: none;
         }
-        .date-bar {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 25px;
-            background: #f9fafb;
-            padding: 15px;
-            border-radius: 16px;
-            flex-wrap: wrap;
-        }
-        .date-bar label {
-            font-weight: 600;
-            color: #374151;
-        }
-        .date-bar input[type="date"] {
-            padding: 10px;
-            border: 1px solid #d1d5db;
-            border-radius: 12px;
-            font-size: 16px;
-            background: white;
-        }
-        .date-range {
+        .date-bar, .date-range {
             display: flex;
             flex-wrap: wrap;
             gap: 15px;
@@ -139,11 +124,11 @@
             padding: 20px;
             border-radius: 20px;
         }
-        .date-range label {
+        .date-bar label, .date-range label {
             font-weight: 600;
             color: #374151;
         }
-        .date-range input[type="date"] {
+        .date-bar input[type="date"], .date-range input[type="date"] {
             padding: 10px;
             border: 1px solid #d1d5db;
             border-radius: 12px;
@@ -297,10 +282,11 @@
         let currentClassId = null;
         let students = [];
         let attendanceRecords = [];
+        let allClasses = []; // لتخزين جميع الفصول
 
         const app = document.getElementById('app');
 
-        let viewMode = 'daily';
+        let viewMode = 'daily'; // 'daily', 'report', 'allClasses'
 
         const LOGO_URL = 'https://i.ibb.co/4gP3wDDV/image.png';
 
@@ -321,23 +307,44 @@
             return `${yyyy}-${mm}-${dd}`;
         }
 
-        async function fetchAttendanceForDate(classId, date) {
-            if (!classId || !students.length) return [];
-            const studentIds = students.map(s => s.id);
-            const { data, error } = await supabaseClient
-                .from('attendance')
-                .select('*')
-                .in('student_id', studentIds)
-                .eq('date', date);
+        // جلب جميع الفصول (للأدمن)
+        async function fetchAllClasses() {
+            const { data, error } = await supabaseClient.from('classes').select('*');
             if (error) {
-                console.error('Error fetching attendance:', error);
+                console.error('Error fetching classes:', error);
                 return [];
             }
             return data || [];
         }
 
+        // جلب جميع الطلاب (للأدمن)
+        async function fetchAllStudents() {
+            const { data, error } = await supabaseClient.from('students').select('*').eq('active', true);
+            if (error) {
+                console.error('Error fetching all students:', error);
+                return [];
+            }
+            return data || [];
+        }
+
+        // جلب سجلات الحضور لنطاق تاريخي لكل الفصول
+        async function fetchAttendanceForAllClasses(startDate, endDate) {
+            const { data, error } = await supabaseClient
+                .from('attendance')
+                .select('*')
+                .gte('date', startDate)
+                .lte('date', endDate)
+                .order('date', { ascending: true });
+            if (error) {
+                console.error('Error fetching attendance for all classes:', error);
+                return [];
+            }
+            return data || [];
+        }
+
+        // جلب سجلات الحضور لفصل معين
         async function fetchAttendanceForDateRange(classId, startDate, endDate) {
-            if (!classId || !students.length) return [];
+            if (!classId) return [];
             const studentIds = students.map(s => s.id);
             const { data, error } = await supabaseClient
                 .from('attendance')
@@ -348,6 +355,21 @@
                 .order('date', { ascending: true });
             if (error) {
                 console.error('Error fetching attendance range:', error);
+                return [];
+            }
+            return data || [];
+        }
+
+        async function fetchAttendanceForDate(classId, date) {
+            if (!classId || !students.length) return [];
+            const studentIds = students.map(s => s.id);
+            const { data, error } = await supabaseClient
+                .from('attendance')
+                .select('*')
+                .in('student_id', studentIds)
+                .eq('date', date);
+            if (error) {
+                console.error('Error fetching attendance:', error);
                 return [];
             }
             return data || [];
@@ -379,8 +401,8 @@
             }
         }
 
-        function updateDashboard(records) {
-            const totalStudents = students.length;
+        function updateDashboard(records, studentsList = students) {
+            const totalStudents = studentsList.length;
             let presentCount = 0, massCount = 0, communionCount = 0, classCount = 0;
 
             if (records.length > 0) {
@@ -452,19 +474,16 @@
             }
         }
 
-        function exportToExcel(data, filename) {
-            const wsData = [['الاسم', 'التاريخ', 'القداس', 'التناول', 'الخدمة', 'السلوك', 'ملاحظات', 'المجموع']];
+        function exportToExcel(data, filename, includeClassColumn = false) {
+            const headers = includeClassColumn 
+                ? ['الفصل', 'الاسم', 'التاريخ', 'القداس', 'التناول', 'الخدمة', 'السلوك', 'ملاحظات', 'المجموع']
+                : ['الاسم', 'التاريخ', 'القداس', 'التناول', 'الخدمة', 'السلوك', 'ملاحظات', 'المجموع'];
+            const wsData = [headers];
             data.forEach(rec => {
-                wsData.push([
-                    rec.student_name,
-                    rec.date,
-                    rec.mass_grade,
-                    rec.communion_grade,
-                    rec.class_grade,
-                    rec.behavior_grade,
-                    rec.notes,
-                    rec.mass_grade + rec.communion_grade + rec.class_grade + rec.behavior_grade
-                ]);
+                const row = includeClassColumn
+                    ? [rec.class_name, rec.student_name, rec.date, rec.mass_grade, rec.communion_grade, rec.class_grade, rec.behavior_grade, rec.notes, rec.mass_grade + rec.communion_grade + rec.class_grade + rec.behavior_grade]
+                    : [rec.student_name, rec.date, rec.mass_grade, rec.communion_grade, rec.class_grade, rec.behavior_grade, rec.notes, rec.mass_grade + rec.communion_grade + rec.class_grade + rec.behavior_grade];
+                wsData.push(row);
             });
             const wb = XLSX.utils.book_new();
             const ws = XLSX.utils.aoa_to_sheet(wsData);
@@ -499,6 +518,7 @@
                     currentUser = userData;
                     currentClassId = userData.class_id;
                     if (userData.role === 'admin') {
+                        allClasses = await fetchAllClasses();
                         loadAdminView();
                     } else {
                         loadServantView();
@@ -553,11 +573,11 @@
         }
 
         async function loadAdminView() {
-            const { data: classes, error } = await supabaseClient.from('classes').select('*');
             let options = '<option value="">اختر الفصل</option>';
-            classes.forEach(cls => {
+            allClasses.forEach(cls => {
                 options += `<option value="${cls.id}">${cls.class_name}</option>`;
             });
+
             app.innerHTML = `
                 <div>
                     <div class="header">
@@ -565,16 +585,29 @@
                             <img src="${LOGO_URL}" alt="شعار الخدمة" class="logo-img">
                             <span class="logo-text">خدمة خمسة وستة</span>
                         </div>
-                        <button class="btn" id="logoutBtn">تسجيل خروج</button>
+                        <div>
+                            <button class="btn btn-info" id="allClassesReportBtn">📋 تقرير شامل لجميع الفصول</button>
+                            <button class="btn" id="logoutBtn">تسجيل خروج</button>
+                        </div>
                     </div>
-                    <div style="margin-bottom:20px;">
+                    <div style="margin-bottom:20px; display: flex; gap: 10px; align-items: center;">
                         <label>اختر الفصل: </label>
-                        <select id="classSelect" style="padding:8px; border-radius:12px; margin-right:10px;">${options}</select>
+                        <select id="classSelect" style="padding:8px; border-radius:12px; flex:1;">${options}</select>
                     </div>
                     <div id="adminContent"></div>
                 </div>
             `;
+
             document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('allClassesReportBtn').addEventListener('click', async () => {
+                viewMode = 'allClasses';
+                const endDate = getTodayDate();
+                const startDate = getThreeWeeksAgo();
+                attendanceRecords = await fetchAttendanceForAllClasses(startDate, endDate);
+                const allStudents = await fetchAllStudents();
+                renderAllClassesReport(allStudents, attendanceRecords, startDate, endDate);
+            });
+
             document.getElementById('classSelect').addEventListener('change', async (e) => {
                 const classId = e.target.value;
                 if (classId) {
@@ -588,6 +621,144 @@
             });
         }
 
+        // دالة عرض التقرير الشامل لجميع الفصول
+        async function renderAllClassesReport(allStudents, attendanceRecords, startDate, endDate) {
+            // إنشاء خريطة للفصول
+            const classMap = new Map(allClasses.map(c => [c.id, c.class_name]));
+
+            // إنشاء خريطة للطلاب مع فصلهم
+            const studentMap = new Map(allStudents.map(s => [s.id, { name: s.name, class_id: s.class_id }]));
+
+            // تجهيز بيانات التقرير مع اسم الفصل
+            const reportData = attendanceRecords.map(rec => {
+                const student = studentMap.get(rec.student_id) || { name: 'غير معروف', class_id: null };
+                return {
+                    ...rec,
+                    student_name: student.name,
+                    class_name: classMap.get(student.class_id) || 'غير معروف',
+                    class_id: student.class_id
+                };
+            }).sort((a, b) => a.class_name.localeCompare(b.class_name) || new Date(a.date) - new Date(b.date));
+
+            // تجميع البيانات حسب الفصل لعرض إحصائيات منفصلة
+            const classesStats = {};
+            allClasses.forEach(cls => {
+                classesStats[cls.id] = {
+                    className: cls.class_name,
+                    students: allStudents.filter(s => s.class_id === cls.id),
+                    attendance: reportData.filter(r => r.class_id === cls.id)
+                };
+            });
+
+            // بناء الجدول
+            let rows = '';
+            reportData.forEach(rec => {
+                const total = rec.mass_grade + rec.communion_grade + rec.class_grade + rec.behavior_grade;
+                const repeated = hasRepeatedAbsence(rec.student_id, reportData) ? ' <span class="repeated-absence">⚠️ غاب مرتين</span>' : '';
+                rows += `
+                    <tr>
+                        <td>${rec.class_name}</td>
+                        <td>${rec.student_name}${repeated}</td>
+                        <td>${rec.date}</td>
+                        <td>${rec.mass_grade}</td>
+                        <td>${rec.communion_grade}</td>
+                        <td>${rec.class_grade}</td>
+                        <td>${rec.behavior_grade}</td>
+                        <td>${rec.notes || ''}</td>
+                        <td class="total-grade">${total}</td>
+                    </tr>
+                `;
+            });
+
+            // إحصائيات إجمالية
+            const totalStudents = allStudents.length;
+            const totalAttendance = reportData.length;
+
+            // عرض المحتوى
+            document.getElementById('adminContent').innerHTML = `
+                <div>
+                    <div class="header" style="border-bottom: none;">
+                        <div class="logo-container">
+                            <img src="${LOGO_URL}" alt="شعار الخدمة" class="logo-img">
+                            <span class="logo-text">تقرير شامل لجميع الفصول</span>
+                        </div>
+                        <div>
+                            <button class="btn" id="backToDailyAdminBtn">🔙 العودة للتسجيل</button>
+                        </div>
+                    </div>
+                    <div class="date-range">
+                        <label>من تاريخ:</label>
+                        <input type="date" id="startDateAll" value="${startDate}">
+                        <label>إلى تاريخ:</label>
+                        <input type="date" id="endDateAll" value="${endDate}">
+                        <button class="btn" id="fetchAllRangeBtn">عرض</button>
+                        <button class="btn btn-success" id="exportAllExcelBtn">📥 تصدير Excel شامل</button>
+                    </div>
+
+                    <!-- إحصائيات سريعة لكل فصل -->
+                    <div class="dashboard-summary" style="flex-wrap: wrap;">
+                        ${allClasses.map(cls => {
+                            const stats = classesStats[cls.id];
+                            const presentCount = stats.attendance.filter(r => r.mass_grade === 10 && r.communion_grade === 10 && r.class_grade === 10).length;
+                            return `
+                                <div class="stat-card" style="min-width: 150px;">
+                                    <h4>${cls.class_name}</h4>
+                                    <div>المخدومين: ${stats.students.length}</div>
+                                    <div>الحضور الكامل: ${presentCount}</div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>الفصل</th>
+                                    <th>الاسم</th>
+                                    <th>التاريخ</th>
+                                    <th>القداس</th>
+                                    <th>التناول</th>
+                                    <th>الخدمة</th>
+                                    <th>السلوك</th>
+                                    <th>ملاحظات</th>
+                                    <th>المجموع</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rows}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="message"></div>
+                </div>
+            `;
+
+            // ربط الأحداث
+            document.getElementById('backToDailyAdminBtn').addEventListener('click', async () => {
+                viewMode = 'daily';
+                loadAdminView(); // إعادة تحميل الصفحة الرئيسية للأدمن
+            });
+
+            document.getElementById('fetchAllRangeBtn').addEventListener('click', async () => {
+                const newStart = document.getElementById('startDateAll').value;
+                const newEnd = document.getElementById('endDateAll').value;
+                const newAttendance = await fetchAttendanceForAllClasses(newStart, newEnd);
+                const allStudents = await fetchAllStudents();
+                renderAllClassesReport(allStudents, newAttendance, newStart, newEnd);
+            });
+
+            document.getElementById('exportAllExcelBtn').addEventListener('click', () => {
+                const dataForExport = reportData.map(rec => ({
+                    ...rec,
+                    student_name: rec.student_name,
+                    class_name: rec.class_name
+                }));
+                exportToExcel(dataForExport, `تقرير_شامل_${new Date().toLocaleDateString()}.xlsx`, true);
+            });
+        }
+
+        // دوال العرض اليومي والتقارير لفصل واحد (كما كانت سابقاً مع بعض التعديلات البسيطة)
         async function renderDailyView() {
             const today = getTodayDate();
             attendanceRecords = await fetchAttendanceForDate(currentClassId, today);
@@ -892,7 +1063,7 @@
                     ...rec,
                     student_name: studentMap.get(rec.student_id) || 'غير معروف'
                 }));
-                exportToExcel(dataForExport, `تقرير_${currentUser?.classes?.class_name}_${new Date().toLocaleDateString()}.xlsx`);
+                exportToExcel(dataForExport, `تقرير_${currentUser?.classes?.class_name}_${new Date().toLocaleDateString()}.xlsx`, false);
             });
         }
 
@@ -994,7 +1165,7 @@
                     ...rec,
                     student_name: studentMap.get(rec.student_id) || 'غير معروف'
                 }));
-                exportToExcel(dataForExport, `تقرير_${new Date().toLocaleDateString()}.xlsx`);
+                exportToExcel(dataForExport, `تقرير_${new Date().toLocaleDateString()}.xlsx`, false);
             });
         }
 
@@ -1058,7 +1229,7 @@
             init();
         }
 
-        console.log('الملف النهائي مع اللوجو في صفحة الدخول');
+        console.log('الملف النهائي مع تقرير شامل لجميع الفصول');
         init();
     </script>
 </body>
