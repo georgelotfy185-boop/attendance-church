@@ -1122,7 +1122,7 @@
             });
         }
 
-        // دالة عرض التقرير الموجز (صف لكل طالب)
+        // دالة عرض التقرير الموجز (صف لكل طالب) مع إضافة الكوبونات
         function renderReportTable(startDate, endDate) {
             const studentMap = new Map(students.map(s => [s.id, s.name]));
 
@@ -1591,6 +1591,7 @@
                         <label>إلى تاريخ:</label>
                         <input type="date" id="endDateAll" value="${endDate}">
                         <button class="btn" id="fetchAllRangeBtn">عرض</button>
+                        <button class="btn btn-success" id="exportAllExcelBtn">📥 تصدير Excel شامل</button>
                     </div>
                     <div class="dashboard-summary" style="flex-wrap: wrap;">
                         ${statsHTML}
@@ -1657,12 +1658,65 @@
             document.getElementById('backToAdminMain').addEventListener('click', () => {
                 loadAdminView();
             });
+
             document.getElementById('fetchAllRangeBtn').addEventListener('click', async () => {
                 const newStart = document.getElementById('startDateAll').value;
                 const newEnd = document.getElementById('endDateAll').value;
                 const newAttendance = await fetchAttendanceForAllClasses(newStart, newEnd);
                 const allStudents = await fetchAllStudents();
                 renderAllClassesReport(allStudents, newAttendance, newStart, newEnd);
+            });
+
+            // زر تصدير Excel الشامل
+            document.getElementById('exportAllExcelBtn').addEventListener('click', () => {
+                // تجهيز بيانات التصدير
+                const exportData = [];
+                allClasses.forEach(cls => {
+                    const data = classesData[cls.id];
+                    if (data.attendance.length === 0) return;
+
+                    const summaryData = data.students.map(s => {
+                        const studentRecords = data.attendance.filter(r => r.student_id === s.id);
+                        const totalDays = studentRecords.length;
+                        const totalMass = studentRecords.reduce((sum, r) => sum + (r.mass_grade || 0), 0);
+                        const totalCommunion = studentRecords.reduce((sum, r) => sum + (r.communion_grade || 0), 0);
+                        const totalClass = studentRecords.reduce((sum, r) => sum + (r.class_grade || 0), 0);
+                        const totalBehavior = studentRecords.reduce((sum, r) => sum + (r.behavior_grade || 0), 0);
+                        const grandTotal = totalMass + totalCommunion + totalClass + totalBehavior;
+                        return {
+                            class_name: cls.class_name,
+                            student_name: s.name,
+                            total_days: totalDays,
+                            total_mass: totalMass,
+                            total_communion: totalCommunion,
+                            total_class: totalClass,
+                            total_behavior: totalBehavior,
+                            grand_total: grandTotal
+                        };
+                    }).filter(s => s.total_days > 0);
+
+                    exportData.push(...summaryData);
+                });
+
+                // إنشاء ورقة Excel
+                const wsData = [['الفصل', 'الاسم', 'عدد أيام الحضور', 'إجمالي القداس', 'إجمالي التناول', 'إجمالي الخدمة', 'إجمالي السلوك', 'المجموع الكلي']];
+                exportData.forEach(row => {
+                    wsData.push([
+                        row.class_name,
+                        row.student_name,
+                        row.total_days,
+                        row.total_mass,
+                        row.total_communion,
+                        row.total_class,
+                        row.total_behavior,
+                        row.grand_total
+                    ]);
+                });
+
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet(wsData);
+                XLSX.utils.book_append_sheet(wb, ws, 'تقرير شامل');
+                XLSX.writeFile(wb, `تقرير_شامل_${new Date().toLocaleDateString()}.xlsx`);
             });
         }
 
