@@ -415,12 +415,6 @@
             font-weight: 700;
             color: #1e3a8a;
         }
-        .coupon-footer {
-            text-align: center;
-            margin-top: 20px;
-            color: #6b7280;
-            font-size: 14px;
-        }
         .print-btn {
             background: #1e3a8a;
             color: white;
@@ -761,7 +755,7 @@
                     </div>
                     <div style="border: 2px dashed #1e3a8a; padding: 20px; border-radius: 20px;">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                            <span style="font-weight: bold;">الطالب:</span>
+                            <span style="font-weight: bold;">اسم المخدوم:</span>
                             <span style="color: #1e3a8a; font-weight: bold;">${studentName}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
@@ -797,9 +791,6 @@
                             <div style="font-size: 14px; color: #1e3a8a;">المجموع الكلي</div>
                             <div style="font-size: 48px; font-weight: bold; color: #1e3a8a;">${grandTotal}</div>
                         </div>
-                    </div>
-                    <div style="text-align: center; margin-top: 20px; color: #6b7280;">
-                        مع تحيات خدمة خمسة وستة - مارمرقس والأنبا شنودة
                     </div>
                 </div>
             `;
@@ -1126,7 +1117,7 @@
         function renderReportTable(startDate, endDate) {
             const studentMap = new Map(students.map(s => [s.id, s.name]));
 
-            // حساب إجماليات كل طالب
+            // حساب إجماليات كل طالب (حتى لو كانت كلها صفر)
             const summaryData = students.map(s => {
                 const studentRecords = attendanceRecords.filter(r => r.student_id === s.id);
                 const totalDays = studentRecords.length;
@@ -1145,7 +1136,7 @@
                     totalBehavior,
                     grandTotal
                 };
-            }).filter(s => s.totalDays > 0); // نعرض فقط من لديهم سجلات
+            }).filter(s => s.totalDays > 0); // نعرض فقط من لديهم سجلات (حتى لو صفرية)
 
             let rows = '';
             summaryData.forEach(s => {
@@ -1720,7 +1711,7 @@
             });
         }
 
-        // دالة حفظ الحضور اليومي
+        // دالة حفظ الحضور اليومي (بدون حذف السجلات الصفرية)
         async function saveDailyAttendance(classId, date) {
             if (!confirm('هل أنت متأكد من حفظ البيانات؟')) {
                 return;
@@ -1751,6 +1742,7 @@
                 if (field === 'notes') rec.notes = inp.value;
             });
 
+            // نقوم بحفظ جميع السجلات حتى الصفرية (لأننا نريد تتبع الغياب)
             for (let [studentId, rec] of studentMap) {
                 records.push({
                     student_id: studentId,
