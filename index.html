@@ -16,15 +16,27 @@
         }
         body {
             background: #f0f2f5;
-            padding: 12px;
+            padding: 10px;
+            min-height: 100vh;
+            position: relative;
+            background-image: url('https://i.ibb.co/4gP3wDDV/image.png');
+            background-repeat: repeat;
+            background-size: 150px 150px;
+            background-position: center;
+            background-attachment: fixed;
+            opacity: 0.95;
         }
+        /* طبقة شفافة فوق الخلفية لجعل النصوص واضحة */
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background: white;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(2px);
             border-radius: 20px;
             box-shadow: 0 8px 16px rgba(0,0,0,0.1);
             padding: 20px;
+            position: relative;
+            z-index: 1;
         }
         .header {
             display: flex;
@@ -58,7 +70,7 @@
             background: #1e3a8a;
             color: white;
             border: none;
-            padding: 10px 18px;
+            padding: 12px 20px; /* أكبر للموبايل */
             border-radius: 30px;
             cursor: pointer;
             font-size: 16px;
@@ -66,6 +78,7 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             transition: background 0.2s;
             margin: 5px;
+            min-width: 120px; /* عرض مناسب للمس */
         }
         .btn:hover {
             background: #2563eb;
@@ -92,10 +105,11 @@
             max-width: 400px;
             margin: 20px auto;
             padding: 30px;
-            background: #f9fafb;
+            background: rgba(255, 255, 255, 0.95);
             border-radius: 24px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.05);
             text-align: center;
+            backdrop-filter: blur(2px);
         }
         .login-form h2 {
             margin-bottom: 20px;
@@ -104,11 +118,11 @@
         }
         .login-form input {
             width: 100%;
-            padding: 14px;
+            padding: 16px; /* أكبر للموبايل */
             margin: 8px 0 20px;
             border: 1px solid #d1d5db;
             border-radius: 16px;
-            font-size: 16px;
+            font-size: 18px; /* خط أكبر */
         }
         .login-form input:focus {
             border-color: #1e3a8a;
@@ -120,29 +134,34 @@
             gap: 15px;
             align-items: center;
             margin-bottom: 25px;
-            background: #f9fafb;
+            background: rgba(249, 250, 251, 0.9);
             padding: 20px;
             border-radius: 20px;
+            backdrop-filter: blur(2px);
         }
         .date-bar label, .date-range label {
             font-weight: 600;
             color: #374151;
+            font-size: 16px;
         }
         .date-bar input[type="date"], .date-range input[type="date"] {
-            padding: 10px;
+            padding: 12px;
             border: 1px solid #d1d5db;
             border-radius: 12px;
             font-size: 16px;
             background: white;
+            flex: 1;
+            min-width: 200px;
         }
         .dashboard-summary {
             display: flex;
             gap: 15px;
             flex-wrap: wrap;
             margin-bottom: 25px;
-            background: #f9fafb;
+            background: rgba(249, 250, 251, 0.9);
             padding: 20px;
             border-radius: 20px;
+            backdrop-filter: blur(2px);
         }
         .stat-card {
             background: white;
@@ -167,59 +186,63 @@
             margin-bottom: 20px;
             border-radius: 16px;
             border: 1px solid #e5e7eb;
+            background: white;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 800px;
+            min-width: 900px; /* أكبر قليلاً للموبايل */
         }
         th {
             background: #1e3a8a;
             color: white;
             font-weight: 600;
             padding: 16px 12px;
-            font-size: 15px;
+            font-size: 16px; /* أكبر */
         }
         td {
             border: 1px solid #e5e7eb;
-            padding: 12px;
+            padding: 15px; /* أكبر */
             text-align: center;
             background: white;
+            font-size: 16px;
         }
         .grade-input {
-            width: 70px;
-            padding: 8px;
+            width: 80px; /* أكبر */
+            padding: 12px;
             text-align: center;
             border: 1px solid #d1d5db;
             border-radius: 8px;
-            font-size: 15px;
+            font-size: 16px;
         }
         .grade-input:out-of-range {
             border: 2px solid red;
         }
         .behavior-select {
-            width: 70px;
-            padding: 8px;
+            width: 80px;
+            padding: 12px;
             border-radius: 8px;
             border: 1px solid #d1d5db;
             background: white;
+            font-size: 16px;
         }
         .total-grade {
             font-weight: 700;
             color: #1e3a8a;
             background: #e0f2fe;
             border-radius: 8px;
-            padding: 5px 0;
-            min-width: 50px;
+            padding: 8px 0;
+            min-width: 60px;
             display: inline-block;
+            font-size: 16px;
         }
         .absent-warning {
             background-color: #fee2e2;
             color: #b91c1c;
             font-weight: 600;
             border-radius: 20px;
-            padding: 4px 8px;
-            font-size: 13px;
+            padding: 6px 10px;
+            font-size: 14px;
             display: inline-block;
             margin-left: 5px;
         }
@@ -228,8 +251,8 @@
             color: #92400e;
             font-weight: 600;
             border-radius: 20px;
-            padding: 4px 8px;
-            font-size: 13px;
+            padding: 6px 10px;
+            font-size: 14px;
             display: inline-block;
             margin-left: 5px;
         }
@@ -237,9 +260,9 @@
             background: #10b981;
             color: white;
             border: none;
-            padding: 14px 28px;
+            padding: 18px 28px; /* أكبر */
             border-radius: 40px;
-            font-size: 18px;
+            font-size: 20px; /* أكبر */
             font-weight: 600;
             width: 100%;
             cursor: pointer;
@@ -251,11 +274,12 @@
             background: #059669;
         }
         .message {
-            padding: 14px;
+            padding: 16px;
             border-radius: 16px;
             margin: 20px 0;
             text-align: center;
             font-weight: 500;
+            font-size: 16px;
         }
         .success {
             background: #d1fae5;
@@ -264,6 +288,31 @@
         .error {
             background: #fee2e2;
             color: #991b1b;
+        }
+        /* تحسينات إضافية للموبايل */
+        @media (max-width: 768px) {
+            .btn {
+                width: 100%;
+                margin: 5px 0;
+            }
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .logo-container {
+                margin-bottom: 10px;
+            }
+            .date-bar, .date-range {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .grade-input, .behavior-select {
+                width: 100%;
+                max-width: 100px;
+            }
+            td {
+                padding: 10px;
+            }
         }
     </style>
 </head>
@@ -590,9 +639,9 @@
                             <button class="btn" id="logoutBtn">تسجيل خروج</button>
                         </div>
                     </div>
-                    <div style="margin-bottom:20px; display: flex; gap: 10px; align-items: center;">
+                    <div style="margin-bottom:20px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                         <label>اختر الفصل: </label>
-                        <select id="classSelect" style="padding:8px; border-radius:12px; flex:1;">${options}</select>
+                        <select id="classSelect" style="padding:8px; border-radius:12px; flex:1; min-width:200px;">${options}</select>
                     </div>
                     <div id="adminContent"></div>
                 </div>
@@ -669,10 +718,6 @@
                     </tr>
                 `;
             });
-
-            // إحصائيات إجمالية
-            const totalStudents = allStudents.length;
-            const totalAttendance = reportData.length;
 
             // عرض المحتوى
             document.getElementById('adminContent').innerHTML = `
@@ -1229,7 +1274,7 @@
             init();
         }
 
-        console.log('الملف النهائي مع تقرير شامل لجميع الفصول');
+        console.log('الملف النهائي مع خلفية اللوجو وتحسين الموبايل');
         init();
     </script>
 </body>
