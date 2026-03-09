@@ -19,7 +19,6 @@
             padding: 10px;
             min-height: 100vh;
             position: relative;
-            /* خلفية مائية خفيفة جداً بعد الدخول */
             background-image: url('https://i.ibb.co/4gP3wDDV/image.png');
             background-repeat: repeat;
             background-size: 200px 200px;
@@ -27,7 +26,6 @@
             background-attachment: fixed;
             opacity: 0.98;
         }
-        /* طبقة شفافة فوق الخلفية لجعل النصوص واضحة */
         body::before {
             content: '';
             position: fixed;
@@ -118,7 +116,12 @@
         .btn-info:hover:not(:disabled) {
             background: #1e3a8a;
         }
-        /* مؤشر التحميل (spinner) */
+        .btn-coupon {
+            background: #8b5cf6;
+        }
+        .btn-coupon:hover:not(:disabled) {
+            background: #7c3aed;
+        }
         .spinner {
             display: inline-block;
             width: 16px;
@@ -238,7 +241,6 @@
             background: white;
             font-size: 16px;
         }
-        /* محاذاة أسماء الطلاب إلى اليمين مع مسافة بادئة */
         td:first-child {
             text-align: right;
             padding-right: 20px;
@@ -331,7 +333,108 @@
             background: #fee2e2;
             color: #991b1b;
         }
-        /* تحسينات إضافية للموبايل */
+        /* تنسيق نافذة الكوبون المنبثقة */
+        .coupon-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .coupon-content {
+            background: white;
+            padding: 30px;
+            border-radius: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            direction: rtl;
+        }
+        .coupon-close {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #6b7280;
+        }
+        .coupon-close:hover {
+            color: #1e3a8a;
+        }
+        .coupon-header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px dashed #1e3a8a;
+            padding-bottom: 15px;
+        }
+        .coupon-header img {
+            height: 60px;
+            margin-bottom: 10px;
+        }
+        .coupon-header h3 {
+            color: #1e3a8a;
+            font-size: 24px;
+        }
+        .coupon-body {
+            margin-bottom: 20px;
+        }
+        .coupon-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .coupon-row:last-child {
+            border-bottom: none;
+        }
+        .coupon-label {
+            font-weight: 600;
+            color: #374151;
+        }
+        .coupon-value {
+            font-weight: 700;
+            color: #1e3a8a;
+            font-size: 18px;
+        }
+        .coupon-total {
+            background: #e0f2fe;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            margin-top: 15px;
+        }
+        .coupon-total .value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #1e3a8a;
+        }
+        .coupon-footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        .print-btn {
+            background: #1e3a8a;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 15px;
+            width: 100%;
+        }
+        .print-btn:hover {
+            background: #2563eb;
+        }
         @media (max-width: 768px) {
             .btn {
                 width: 100%;
@@ -356,7 +459,6 @@
                 padding: 10px;
             }
         }
-        /* للشاشات الصغيرة جداً (أقل من 400px) */
         @media (max-width: 400px) {
             .grade-input, .behavior-select {
                 width: 100%;
@@ -377,6 +479,14 @@
 <body>
     <div class="container" id="app"></div>
 
+    <!-- نافذة الكوبون المنبثقة -->
+    <div id="couponModal" class="coupon-modal">
+        <div class="coupon-content" id="couponContent">
+            <span class="coupon-close" onclick="closeCouponModal()">&times;</span>
+            <div id="couponInner"></div>
+        </div>
+    </div>
+
     <script>
         // ------------------- إعدادات Supabase (ثابتة) -------------------
         const SUPABASE_URL = 'https://segqpdkygxdzzpkkgiem.supabase.co';
@@ -389,15 +499,14 @@
         let currentClassId = null;
         let students = [];
         let attendanceRecords = [];
-        let allClasses = []; // لتخزين جميع الفصول
-        let isLoading = false; // حالة التحميل
-
-        const app = document.getElementById('app');
-
-        let viewMode = 'daily'; // 'daily', 'report', 'allClasses'
+        let allClasses = [];
+        let isLoading = false;
+        let viewMode = 'daily'; // 'daily', 'report', 'allClasses', 'summary'
+        let reportViewMode = 'summary'; // 'summary' or 'detailed'
 
         const LOGO_URL = 'https://i.ibb.co/4gP3wDDV/image.png';
 
+        // دوال مساعدة للتواريخ
         function getTodayDate() {
             const today = new Date();
             const yyyy = today.getFullYear();
@@ -415,7 +524,7 @@
             return `${yyyy}-${mm}-${dd}`;
         }
 
-        // جلب جميع الفصول (للأدمن)
+        // دوال جلب البيانات
         async function fetchAllClasses() {
             const { data, error } = await supabaseClient.from('classes').select('*');
             if (error) {
@@ -425,7 +534,6 @@
             return data || [];
         }
 
-        // جلب جميع الطلاب (للأدمن)
         async function fetchAllStudents() {
             const { data, error } = await supabaseClient.from('students').select('*').eq('active', true);
             if (error) {
@@ -435,7 +543,6 @@
             return data || [];
         }
 
-        // جلب سجلات الحضور لنطاق تاريخي لكل الفصول
         async function fetchAttendanceForAllClasses(startDate, endDate) {
             const { data, error } = await supabaseClient
                 .from('attendance')
@@ -450,7 +557,6 @@
             return data || [];
         }
 
-        // جلب سجلات الحضور لفصل معين
         async function fetchAttendanceForDateRange(classId, startDate, endDate) {
             if (!classId) return [];
             const studentIds = students.map(s => s.id);
@@ -483,6 +589,7 @@
             return data || [];
         }
 
+        // دوال حساب المجموع والتحديث
         function calculateTotalFromRow(row) {
             const mass = parseInt(row.querySelector('[data-field="mass"]')?.value) || 0;
             const communion = parseInt(row.querySelector('[data-field="communion"]')?.value) || 0;
@@ -552,6 +659,7 @@
             }
         }
 
+        // ربط مستمعي الأحداث
         function attachInputListeners() {
             document.querySelectorAll('[data-field="mass"], [data-field="communion"], [data-field="class"], [data-field="behavior"]').forEach(input => {
                 input.removeEventListener('input', inputHandler);
@@ -582,6 +690,7 @@
             }
         }
 
+        // تصدير Excel
         function exportToExcel(data, filename, includeClassColumn = false) {
             const headers = includeClassColumn 
                 ? ['الفصل', 'الاسم', 'التاريخ', 'القداس', 'التناول', 'الخدمة', 'السلوك', 'ملاحظات', 'المجموع']
@@ -599,6 +708,7 @@
             XLSX.writeFile(wb, filename);
         }
 
+        // التحقق من الغياب المتكرر
         function hasRepeatedAbsence(studentId, records) {
             const studentRecords = records
                 .filter(r => r.student_id === studentId)
@@ -613,6 +723,89 @@
             return false;
         }
 
+        // دوال الكوبونات
+        function openCouponModal() {
+            document.getElementById('couponModal').style.display = 'flex';
+        }
+
+        function closeCouponModal() {
+            document.getElementById('couponModal').style.display = 'none';
+        }
+
+        function printCoupon(htmlContent) {
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(htmlContent);
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+        }
+
+        function generateCouponHTML(studentName, className, startDate, endDate, attendanceData) {
+            // حساب إجمالي الدرجات في الفترة
+            let totalMass = 0, totalCommunion = 0, totalClass = 0, totalBehavior = 0;
+            attendanceData.forEach(rec => {
+                totalMass += rec.mass_grade || 0;
+                totalCommunion += rec.communion_grade || 0;
+                totalClass += rec.class_grade || 0;
+                totalBehavior += rec.behavior_grade || 0;
+            });
+            const grandTotal = totalMass + totalCommunion + totalClass + totalBehavior;
+            const totalDays = attendanceData.length;
+
+            return `
+                <div style="font-family: 'Segoe UI', sans-serif; direction: rtl; padding: 20px;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <img src="${LOGO_URL}" style="height: 80px;" alt="شعار الخدمة">
+                        <h2 style="color: #1e3a8a; margin: 10px 0;">خدمة خمسة وستة</h2>
+                        <h3>كوبون تميز</h3>
+                    </div>
+                    <div style="border: 2px dashed #1e3a8a; padding: 20px; border-radius: 20px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                            <span style="font-weight: bold;">الطالب:</span>
+                            <span style="color: #1e3a8a; font-weight: bold;">${studentName}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                            <span style="font-weight: bold;">الفصل:</span>
+                            <span style="color: #1e3a8a;">${className}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                            <span style="font-weight: bold;">الفترة:</span>
+                            <span>${startDate} إلى ${endDate}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                            <span style="font-weight: bold;">عدد أيام الحضور:</span>
+                            <span>${totalDays}</span>
+                        </div>
+                        <div style="border-top: 1px solid #e5e7eb; margin: 15px 0;"></div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span>إجمالي درجات القداس:</span>
+                            <span>${totalMass}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span>إجمالي درجات التناول:</span>
+                            <span>${totalCommunion}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span>إجمالي درجات الخدمة:</span>
+                            <span>${totalClass}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span>إجمالي درجات السلوك:</span>
+                            <span>${totalBehavior}</span>
+                        </div>
+                        <div style="background: #e0f2fe; border-radius: 12px; padding: 15px; text-align: center; margin-top: 15px;">
+                            <div style="font-size: 14px; color: #1e3a8a;">المجموع الكلي</div>
+                            <div style="font-size: 48px; font-weight: bold; color: #1e3a8a;">${grandTotal}</div>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: 20px; color: #6b7280;">
+                        مع تحيات خدمة خمسة وستة - مارمرقس والأنبا شنودة
+                    </div>
+                </div>
+            `;
+        }
+
+        // دوال العرض
         async function init() {
             const { data: { session }, error } = await supabaseClient.auth.getSession();
             if (session?.user) {
@@ -694,7 +887,7 @@
                             <span class="logo-text">خدمة خمسة وستة</span>
                         </div>
                         <div>
-                            <button class="btn btn-info" id="allClassesReportBtn">📋 تقرير شامل لجميع الفصول</button>
+                            <button class="btn btn-info" id="allClassesReportBtn">📋 تقرير شامل</button>
                             <button class="btn" id="logoutBtn">تسجيل خروج</button>
                         </div>
                     </div>
@@ -729,170 +922,13 @@
             });
         }
 
-        // دالة عرض التقرير الشامل لجميع الفصول
-        async function renderAllClassesReport(allStudents, attendanceRecords, startDate, endDate) {
-            // إنشاء خريطة للفصول
-            const classMap = new Map(allClasses.map(c => [c.id, c.class_name]));
-
-            // إنشاء خريطة للطلاب مع فصلهم
-            const studentMap = new Map(allStudents.map(s => [s.id, { name: s.name, class_id: s.class_id }]));
-
-            // تجهيز بيانات التقرير مع اسم الفصل
-            const reportData = attendanceRecords.map(rec => {
-                const student = studentMap.get(rec.student_id) || { name: 'غير معروف', class_id: null };
-                return {
-                    ...rec,
-                    student_name: student.name,
-                    class_name: classMap.get(student.class_id) || 'غير معروف',
-                    class_id: student.class_id
-                };
-            }).sort((a, b) => a.class_name.localeCompare(b.class_name) || new Date(a.date) - new Date(b.date));
-
-            // تجميع البيانات حسب الفصل لعرض إحصائيات منفصلة
-            const classesStats = {};
-            allClasses.forEach(cls => {
-                classesStats[cls.id] = {
-                    className: cls.class_name,
-                    students: allStudents.filter(s => s.class_id === cls.id),
-                    attendance: reportData.filter(r => r.class_id === cls.id)
-                };
-            });
-
-            // بناء الجدول
-            let rows = '';
-            reportData.forEach(rec => {
-                const total = rec.mass_grade + rec.communion_grade + rec.class_grade + rec.behavior_grade;
-                const repeated = hasRepeatedAbsence(rec.student_id, reportData) ? ' <span class="repeated-absence">⚠️ غاب مرتين</span>' : '';
-                rows += `
-                    <tr>
-                        <td>${rec.class_name}</td>
-                        <td>${rec.student_name}${repeated}</td>
-                        <td>${rec.date}</td>
-                        <td>${rec.mass_grade}</td>
-                        <td>${rec.communion_grade}</td>
-                        <td>${rec.class_grade}</td>
-                        <td>${rec.behavior_grade}</td>
-                        <td>${rec.notes || ''}</td>
-                        <td class="total-grade">${total}</td>
-                    </tr>
-                `;
-            });
-
-            // عرض المحتوى
-            document.getElementById('adminContent').innerHTML = `
-                <div>
-                    <div class="header" style="border-bottom: none;">
-                        <div class="logo-container">
-                            <img src="${LOGO_URL}" alt="شعار الخدمة" class="logo-img">
-                            <span class="logo-text">تقرير شامل لجميع الفصول</span>
-                        </div>
-                        <div>
-                            <button class="btn" id="backToDailyAdminBtn">🔙 العودة للتسجيل</button>
-                        </div>
-                    </div>
-                    <div class="date-range">
-                        <label>من تاريخ:</label>
-                        <input type="date" id="startDateAll" value="${startDate}">
-                        <label>إلى تاريخ:</label>
-                        <input type="date" id="endDateAll" value="${endDate}">
-                        <button class="btn" id="fetchAllRangeBtn">عرض</button>
-                        <button class="btn btn-success" id="exportAllExcelBtn">📥 تصدير Excel شامل</button>
-                    </div>
-
-                    <!-- إحصائيات سريعة لكل فصل -->
-                    <div class="dashboard-summary" style="flex-wrap: wrap;">
-                        ${allClasses.map(cls => {
-                            const stats = classesStats[cls.id];
-                            const presentCount = stats.attendance.filter(r => r.mass_grade === 10 && r.communion_grade === 10 && r.class_grade === 10).length;
-                            return `
-                                <div class="stat-card" style="min-width: 150px;">
-                                    <h4>${cls.class_name}</h4>
-                                    <div>المخدومين: ${stats.students.length}</div>
-                                    <div>الحضور الكامل: ${presentCount}</div>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-
-                    <div class="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>الفصل</th>
-                                    <th>الاسم</th>
-                                    <th>التاريخ</th>
-                                    <th>القداس</th>
-                                    <th>التناول</th>
-                                    <th>الخدمة</th>
-                                    <th>السلوك</th>
-                                    <th>ملاحظات</th>
-                                    <th>المجموع</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${rows}
-                            </tbody>
-                        </table>
-                    </div>
-                    <div id="message"></div>
-                </div>
-            `;
-
-            // ربط الأحداث
-            document.getElementById('backToDailyAdminBtn').addEventListener('click', async () => {
-                viewMode = 'daily';
-                loadAdminView(); // إعادة تحميل الصفحة الرئيسية للأدمن
-            });
-
-            document.getElementById('fetchAllRangeBtn').addEventListener('click', async () => {
-                const newStart = document.getElementById('startDateAll').value;
-                const newEnd = document.getElementById('endDateAll').value;
-                const newAttendance = await fetchAttendanceForAllClasses(newStart, newEnd);
-                const allStudents = await fetchAllStudents();
-                renderAllClassesReport(allStudents, newAttendance, newStart, newEnd);
-            });
-
-            document.getElementById('exportAllExcelBtn').addEventListener('click', () => {
-                const dataForExport = reportData.map(rec => ({
-                    ...rec,
-                    student_name: rec.student_name,
-                    class_name: rec.class_name
-                }));
-                exportToExcel(dataForExport, `تقرير_شامل_${new Date().toLocaleDateString()}.xlsx`, true);
-            });
-        }
-
-        // دوال العرض اليومي والتقارير لفصل واحد (كما كانت سابقاً مع بعض التعديلات البسيطة)
-        async function renderDailyView() {
-            const today = getTodayDate();
-            attendanceRecords = await fetchAttendanceForDate(currentClassId, today);
-            renderDailyTable(today);
-        }
-
-        async function renderDailyAdminView(classId) {
-            const today = getTodayDate();
-            attendanceRecords = await fetchAttendanceForDate(classId, today);
-            renderDailyTableAdmin(classId, today);
-        }
-
-        async function renderReportView() {
-            const endDate = getTodayDate();
-            const startDate = getThreeWeeksAgo();
-            attendanceRecords = await fetchAttendanceForDateRange(currentClassId, startDate, endDate);
-            renderReportTable(startDate, endDate);
-        }
-
-        async function renderReportAdminView(classId) {
-            const endDate = getTodayDate();
-            const startDate = getThreeWeeksAgo();
-            attendanceRecords = await fetchAttendanceForDateRange(classId, startDate, endDate);
-            renderReportTableAdmin(classId, startDate, endDate);
-        }
-
+        // دوال العرض اليومي (مع خانات فارغة)
         function renderDailyTable(selectedDate) {
             let rows = '';
             students.forEach(s => {
+                // نبحث عن سجل لهذا الطالب في هذا التاريخ
                 const record = attendanceRecords.find(r => r.student_id === s.id);
+                // إذا وجد سجل، نستخدم قيمه، وإلا نستخدم 0
                 const mass = record ? record.mass_grade : 0;
                 const communion = record ? record.communion_grade : 0;
                 const classGrade = record ? record.class_grade : 0;
@@ -969,7 +1005,10 @@
             document.getElementById('logoutBtn').addEventListener('click', logout);
             document.getElementById('reportBtn').addEventListener('click', async () => {
                 viewMode = 'report';
-                await renderReportView();
+                const endDate = getTodayDate();
+                const startDate = getThreeWeeksAgo();
+                attendanceRecords = await fetchAttendanceForDateRange(currentClassId, startDate, endDate);
+                renderReportTable(startDate, endDate);
             });
             document.getElementById('saveAttendance').addEventListener('click', () => saveDailyAttendance(currentClassId, selectedDate));
             document.getElementById('attendanceDate').addEventListener('change', async (e) => {
@@ -977,6 +1016,19 @@
                 attendanceRecords = await fetchAttendanceForDate(currentClassId, newDate);
                 renderDailyTable(newDate);
             });
+        }
+
+        async function renderDailyView() {
+            const today = getTodayDate();
+            // لا نجلب سجلات اليوم حتى لا تظهر الخانات ممتلئة
+            attendanceRecords = []; // نجعلها فارغة
+            renderDailyTable(today);
+        }
+
+        async function renderDailyAdminView(classId) {
+            const today = getTodayDate();
+            attendanceRecords = []; // فارغة
+            renderDailyTableAdmin(classId, today);
         }
 
         function renderDailyTableAdmin(classId, selectedDate) {
@@ -1057,7 +1109,10 @@
 
             document.getElementById('reportAdminBtn').addEventListener('click', async () => {
                 viewMode = 'report';
-                await renderReportAdminView(classId);
+                const endDate = getTodayDate();
+                const startDate = getThreeWeeksAgo();
+                attendanceRecords = await fetchAttendanceForDateRange(classId, startDate, endDate);
+                renderReportTableAdmin(classId, startDate, endDate);
             });
             document.getElementById('saveAttendanceAdmin').addEventListener('click', () => saveDailyAttendance(classId, selectedDate));
             document.getElementById('attendanceDateAdmin').addEventListener('change', async (e) => {
@@ -1067,41 +1122,47 @@
             });
         }
 
+        // دالة عرض التقرير الموجز (صف لكل طالب)
         function renderReportTable(startDate, endDate) {
             const studentMap = new Map(students.map(s => [s.id, s.name]));
-            const reportData = attendanceRecords.map(rec => ({
-                ...rec,
-                student_name: studentMap.get(rec.student_id) || 'غير معروف'
-            }));
+
+            // حساب إجماليات كل طالب
+            const summaryData = students.map(s => {
+                const studentRecords = attendanceRecords.filter(r => r.student_id === s.id);
+                const totalDays = studentRecords.length;
+                const totalMass = studentRecords.reduce((sum, r) => sum + (r.mass_grade || 0), 0);
+                const totalCommunion = studentRecords.reduce((sum, r) => sum + (r.communion_grade || 0), 0);
+                const totalClass = studentRecords.reduce((sum, r) => sum + (r.class_grade || 0), 0);
+                const totalBehavior = studentRecords.reduce((sum, r) => sum + (r.behavior_grade || 0), 0);
+                const grandTotal = totalMass + totalCommunion + totalClass + totalBehavior;
+                return {
+                    id: s.id,
+                    name: s.name,
+                    totalDays,
+                    totalMass,
+                    totalCommunion,
+                    totalClass,
+                    totalBehavior,
+                    grandTotal
+                };
+            }).filter(s => s.totalDays > 0); // نعرض فقط من لديهم سجلات
 
             let rows = '';
-            students.forEach(s => {
-                const studentRecords = attendanceRecords.filter(r => r.student_id === s.id);
-                if (studentRecords.length === 0) {
-                    rows += `<tr><td colspan="8" style="text-align:right;">${s.name} - لا توجد بيانات</td></tr>`;
-                } else {
-                    studentRecords.sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(rec => {
-                        const mass = rec.mass_grade || 0;
-                        const communion = rec.communion_grade || 0;
-                        const classGrade = rec.class_grade || 0;
-                        const behavior = rec.behavior_grade || 0;
-                        const notes = rec.notes || '';
-                        const total = mass + communion + classGrade + behavior;
-                        const repeated = hasRepeatedAbsence(s.id, attendanceRecords) ? ' <span class="repeated-absence">⚠️ غاب مرتين</span>' : '';
-                        rows += `
-                            <tr>
-                                <td>${s.name}${repeated}</td>
-                                <td>${rec.date}</td>
-                                <td>${mass}</td>
-                                <td>${communion}</td>
-                                <td>${classGrade}</td>
-                                <td>${behavior}</td>
-                                <td>${notes}</td>
-                                <td class="total-grade">${total}</td>
-                            </tr>
-                        `;
-                    });
-                }
+            summaryData.forEach(s => {
+                rows += `
+                    <tr>
+                        <td>${s.name}</td>
+                        <td>${s.totalDays}</td>
+                        <td>${s.totalMass}</td>
+                        <td>${s.totalCommunion}</td>
+                        <td>${s.totalClass}</td>
+                        <td>${s.totalBehavior}</td>
+                        <td class="total-grade">${s.grandTotal}</td>
+                        <td>
+                            <button class="btn btn-coupon" onclick="showCoupon('${s.id}', '${startDate}', '${endDate}')">🎫 كوبون</button>
+                        </td>
+                    </tr>
+                `;
             });
 
             app.innerHTML = `
@@ -1109,10 +1170,13 @@
                     <div class="header">
                         <div class="logo-container">
                             <img src="${LOGO_URL}" alt="شعار الخدمة" class="logo-img">
-                            <span class="logo-text">${currentUser?.classes?.class_name || 'الفصل'} - تقرير</span>
+                            <span class="logo-text">${currentUser?.classes?.class_name || 'الفصل'} - تقرير موجز</span>
                         </div>
                         <div>
                             <button class="btn" id="backToDailyBtn">🔙 العودة للتسجيل</button>
+                            <button class="btn btn-info" id="toggleReportMode">📊 عرض التفاصيل</button>
+                            <button class="btn btn-success" id="exportSummaryExcel">📥 تصدير Excel</button>
+                            <button class="btn btn-coupon" id="printAllCoupons">🖨️ طباعة كوبونات الفصل</button>
                             <button class="btn" id="logoutBtn">تسجيل خروج</button>
                         </div>
                     </div>
@@ -1122,9 +1186,131 @@
                         <label>إلى تاريخ:</label>
                         <input type="date" id="endDate" value="${endDate}">
                         <button class="btn" id="fetchRangeBtn">عرض</button>
-                        <button class="btn btn-success" id="exportExcelBtn">📥 تصدير Excel</button>
                     </div>
                     <div class="dashboard-summary"></div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>الاسم</th>
+                                    <th>عدد أيام الحضور</th>
+                                    <th>إجمالي القداس</th>
+                                    <th>إجمالي التناول</th>
+                                    <th>إجمالي الخدمة</th>
+                                    <th>إجمالي السلوك</th>
+                                    <th>المجموع الكلي</th>
+                                    <th>كوبون</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rows}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="message"></div>
+                </div>
+            `;
+
+            updateDashboard(attendanceRecords);
+
+            document.getElementById('backToDailyBtn').addEventListener('click', async () => {
+                viewMode = 'daily';
+                renderDailyView();
+            });
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('toggleReportMode').addEventListener('click', () => {
+                renderDetailedReport(startDate, endDate);
+            });
+            document.getElementById('exportSummaryExcel').addEventListener('click', () => {
+                const dataForExport = summaryData.map(s => ({
+                    student_name: s.name,
+                    total_days: s.totalDays,
+                    total_mass: s.totalMass,
+                    total_communion: s.totalCommunion,
+                    total_class: s.totalClass,
+                    total_behavior: s.totalBehavior,
+                    grand_total: s.grandTotal
+                }));
+                // تحويل إلى صيغة Excel
+                const wsData = [['الاسم', 'عدد أيام الحضور', 'إجمالي القداس', 'إجمالي التناول', 'إجمالي الخدمة', 'إجمالي السلوك', 'المجموع الكلي']];
+                dataForExport.forEach(s => {
+                    wsData.push([s.student_name, s.total_days, s.total_mass, s.total_communion, s.total_class, s.total_behavior, s.grand_total]);
+                });
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet(wsData);
+                XLSX.utils.book_append_sheet(wb, ws, 'تقرير موجز');
+                XLSX.writeFile(wb, `تقرير_موجز_${currentUser?.classes?.class_name}_${new Date().toLocaleDateString()}.xlsx`);
+            });
+            document.getElementById('printAllCoupons').addEventListener('click', () => {
+                // تجهيز كوبونات جميع الطلاب في الفترة
+                let couponsHTML = '';
+                summaryData.forEach(s => {
+                    const studentRecords = attendanceRecords.filter(r => r.student_id === s.id);
+                    couponsHTML += generateCouponHTML(s.name, currentUser?.classes?.class_name || 'الفصل', startDate, endDate, studentRecords);
+                    couponsHTML += '<div style="page-break-after: always;"></div>'; // فاصل صفحات للطباعة
+                });
+                printCoupon(couponsHTML);
+            });
+            document.getElementById('fetchRangeBtn').addEventListener('click', async () => {
+                const newStart = document.getElementById('startDate').value;
+                const newEnd = document.getElementById('endDate').value;
+                attendanceRecords = await fetchAttendanceForDateRange(currentClassId, newStart, newEnd);
+                renderReportTable(newStart, newEnd);
+            });
+
+            // تخزين البيانات في window لاستخدامها في دوال الكوبون
+            window.currentClassId = currentClassId;
+            window.currentUser = currentUser;
+            window.attendanceRecords = attendanceRecords;
+            window.students = students;
+            window.startDate = startDate;
+            window.endDate = endDate;
+        }
+
+        // دالة عرض التقرير المفصل (كل يوم في صف)
+        function renderDetailedReport(startDate, endDate) {
+            const studentMap = new Map(students.map(s => [s.id, s.name]));
+            const reportData = attendanceRecords.map(rec => ({
+                ...rec,
+                student_name: studentMap.get(rec.student_id) || 'غير معروف'
+            })).sort((a, b) => a.student_name.localeCompare(b.student_name) || new Date(a.date) - new Date(b.date));
+
+            let rows = '';
+            reportData.forEach(rec => {
+                const total = rec.mass_grade + rec.communion_grade + rec.class_grade + rec.behavior_grade;
+                rows += `
+                    <tr>
+                        <td>${rec.student_name}</td>
+                        <td>${rec.date}</td>
+                        <td>${rec.mass_grade}</td>
+                        <td>${rec.communion_grade}</td>
+                        <td>${rec.class_grade}</td>
+                        <td>${rec.behavior_grade}</td>
+                        <td>${rec.notes || ''}</td>
+                        <td class="total-grade">${total}</td>
+                    </tr>
+                `;
+            });
+
+            app.innerHTML = `
+                <div>
+                    <div class="header">
+                        <div class="logo-container">
+                            <img src="${LOGO_URL}" alt="شعار الخدمة" class="logo-img">
+                            <span class="logo-text">${currentUser?.classes?.class_name || 'الفصل'} - تقرير مفصل</span>
+                        </div>
+                        <div>
+                            <button class="btn" id="backToSummaryBtn">🔙 العودة للموجز</button>
+                            <button class="btn" id="logoutBtn">تسجيل خروج</button>
+                        </div>
+                    </div>
+                    <div class="date-range">
+                        <label>من تاريخ:</label>
+                        <input type="date" id="startDate" value="${startDate}">
+                        <label>إلى تاريخ:</label>
+                        <input type="date" id="endDate" value="${endDate}">
+                        <button class="btn" id="fetchRangeBtn">عرض</button>
+                    </div>
                     <div class="table-wrapper">
                         <table>
                             <thead>
@@ -1148,64 +1334,59 @@
                 </div>
             `;
 
-            updateDashboard(attendanceRecords);
-
-            document.getElementById('backToDailyBtn').addEventListener('click', async () => {
-                viewMode = 'daily';
-                await renderDailyView();
+            document.getElementById('backToSummaryBtn').addEventListener('click', () => {
+                renderReportTable(startDate, endDate);
             });
             document.getElementById('logoutBtn').addEventListener('click', logout);
             document.getElementById('fetchRangeBtn').addEventListener('click', async () => {
                 const newStart = document.getElementById('startDate').value;
                 const newEnd = document.getElementById('endDate').value;
                 attendanceRecords = await fetchAttendanceForDateRange(currentClassId, newStart, newEnd);
-                renderReportTable(newStart, newEnd);
-            });
-            document.getElementById('exportExcelBtn').addEventListener('click', () => {
-                const studentMap = new Map(students.map(s => [s.id, s.name]));
-                const dataForExport = attendanceRecords.map(rec => ({
-                    ...rec,
-                    student_name: studentMap.get(rec.student_id) || 'غير معروف'
-                }));
-                exportToExcel(dataForExport, `تقرير_${currentUser?.classes?.class_name}_${new Date().toLocaleDateString()}.xlsx`, false);
+                renderDetailedReport(newStart, newEnd);
             });
         }
 
-        function renderReportTableAdmin(classId, startDate, endDate) {
+        // دوال التقارير للأدمن (مماثلة ولكن مع عرض اسم الفصل)
+        async function renderReportTableAdmin(classId, startDate, endDate) {
+            // نعيد استخدام نفس الدوال مع تعديل بسيط
             const studentMap = new Map(students.map(s => [s.id, s.name]));
-            const reportData = attendanceRecords.map(rec => ({
-                ...rec,
-                student_name: studentMap.get(rec.student_id) || 'غير معروف'
-            }));
+
+            const summaryData = students.map(s => {
+                const studentRecords = attendanceRecords.filter(r => r.student_id === s.id);
+                const totalDays = studentRecords.length;
+                const totalMass = studentRecords.reduce((sum, r) => sum + (r.mass_grade || 0), 0);
+                const totalCommunion = studentRecords.reduce((sum, r) => sum + (r.communion_grade || 0), 0);
+                const totalClass = studentRecords.reduce((sum, r) => sum + (r.class_grade || 0), 0);
+                const totalBehavior = studentRecords.reduce((sum, r) => sum + (r.behavior_grade || 0), 0);
+                const grandTotal = totalMass + totalCommunion + totalClass + totalBehavior;
+                return {
+                    id: s.id,
+                    name: s.name,
+                    totalDays,
+                    totalMass,
+                    totalCommunion,
+                    totalClass,
+                    totalBehavior,
+                    grandTotal
+                };
+            }).filter(s => s.totalDays > 0);
 
             let rows = '';
-            students.forEach(s => {
-                const studentRecords = attendanceRecords.filter(r => r.student_id === s.id);
-                if (studentRecords.length === 0) {
-                    rows += `<tr><td colspan="8" style="text-align:right;">${s.name} - لا توجد بيانات</td></tr>`;
-                } else {
-                    studentRecords.sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(rec => {
-                        const mass = rec.mass_grade || 0;
-                        const communion = rec.communion_grade || 0;
-                        const classGrade = rec.class_grade || 0;
-                        const behavior = rec.behavior_grade || 0;
-                        const notes = rec.notes || '';
-                        const total = mass + communion + classGrade + behavior;
-                        const repeated = hasRepeatedAbsence(s.id, attendanceRecords) ? ' <span class="repeated-absence">⚠️ غاب مرتين</span>' : '';
-                        rows += `
-                            <tr>
-                                <td>${s.name}${repeated}</td>
-                                <td>${rec.date}</td>
-                                <td>${mass}</td>
-                                <td>${communion}</td>
-                                <td>${classGrade}</td>
-                                <td>${behavior}</td>
-                                <td>${notes}</td>
-                                <td class="total-grade">${total}</td>
-                            </tr>
-                        `;
-                    });
-                }
+            summaryData.forEach(s => {
+                rows += `
+                    <tr>
+                        <td>${s.name}</td>
+                        <td>${s.totalDays}</td>
+                        <td>${s.totalMass}</td>
+                        <td>${s.totalCommunion}</td>
+                        <td>${s.totalClass}</td>
+                        <td>${s.totalBehavior}</td>
+                        <td class="total-grade">${s.grandTotal}</td>
+                        <td>
+                            <button class="btn btn-coupon" onclick="showCoupon('${s.id}', '${startDate}', '${endDate}')">🎫 كوبون</button>
+                        </td>
+                    </tr>
+                `;
             });
 
             document.getElementById('adminContent').innerHTML = `
@@ -1217,6 +1398,8 @@
                         </div>
                         <div>
                             <button class="btn" id="backToDailyAdminBtn">🔙 العودة للتسجيل</button>
+                            <button class="btn btn-info" id="toggleDetailedAdmin">📊 عرض التفاصيل</button>
+                            <button class="btn btn-coupon" id="printAllCouponsAdmin">🖨️ طباعة كوبونات الفصل</button>
                         </div>
                     </div>
                     <div class="date-range">
@@ -1225,7 +1408,6 @@
                         <label>إلى تاريخ:</label>
                         <input type="date" id="endDateAdmin" value="${endDate}">
                         <button class="btn" id="fetchRangeAdminBtn">عرض</button>
-                        <button class="btn btn-success" id="exportExcelAdminBtn">📥 تصدير Excel</button>
                     </div>
                     <div class="dashboard-summary"></div>
                     <div class="table-wrapper">
@@ -1233,13 +1415,13 @@
                             <thead>
                                 <tr>
                                     <th>الاسم</th>
-                                    <th>التاريخ</th>
-                                    <th>القداس</th>
-                                    <th>التناول</th>
-                                    <th>الخدمة</th>
-                                    <th>السلوك</th>
-                                    <th>ملاحظات</th>
-                                    <th>المجموع</th>
+                                    <th>عدد أيام الحضور</th>
+                                    <th>إجمالي القداس</th>
+                                    <th>إجمالي التناول</th>
+                                    <th>إجمالي الخدمة</th>
+                                    <th>إجمالي السلوك</th>
+                                    <th>المجموع الكلي</th>
+                                    <th>كوبون</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1257,24 +1439,235 @@
                 viewMode = 'daily';
                 await renderDailyAdminView(classId);
             });
+            document.getElementById('toggleDetailedAdmin').addEventListener('click', () => {
+                renderDetailedReportAdmin(classId, startDate, endDate);
+            });
+            document.getElementById('printAllCouponsAdmin').addEventListener('click', () => {
+                let couponsHTML = '';
+                summaryData.forEach(s => {
+                    const studentRecords = attendanceRecords.filter(r => r.student_id === s.id);
+                    const className = allClasses.find(c => c.id === classId)?.class_name || 'الفصل';
+                    couponsHTML += generateCouponHTML(s.name, className, startDate, endDate, studentRecords);
+                    couponsHTML += '<div style="page-break-after: always;"></div>';
+                });
+                printCoupon(couponsHTML);
+            });
             document.getElementById('fetchRangeAdminBtn').addEventListener('click', async () => {
                 const newStart = document.getElementById('startDateAdmin').value;
                 const newEnd = document.getElementById('endDateAdmin').value;
                 attendanceRecords = await fetchAttendanceForDateRange(classId, newStart, newEnd);
                 renderReportTableAdmin(classId, newStart, newEnd);
             });
-            document.getElementById('exportExcelAdminBtn').addEventListener('click', () => {
-                const studentMap = new Map(students.map(s => [s.id, s.name]));
-                const dataForExport = attendanceRecords.map(rec => ({
-                    ...rec,
-                    student_name: studentMap.get(rec.student_id) || 'غير معروف'
-                }));
-                exportToExcel(dataForExport, `تقرير_${new Date().toLocaleDateString()}.xlsx`, false);
+
+            window.currentClassId = classId;
+            window.currentUser = currentUser;
+            window.attendanceRecords = attendanceRecords;
+            window.students = students;
+            window.startDate = startDate;
+            window.endDate = endDate;
+        }
+
+        function renderDetailedReportAdmin(classId, startDate, endDate) {
+            const studentMap = new Map(students.map(s => [s.id, s.name]));
+            const reportData = attendanceRecords.map(rec => ({
+                ...rec,
+                student_name: studentMap.get(rec.student_id) || 'غير معروف'
+            })).sort((a, b) => a.student_name.localeCompare(b.student_name) || new Date(a.date) - new Date(b.date));
+
+            let rows = '';
+            reportData.forEach(rec => {
+                const total = rec.mass_grade + rec.communion_grade + rec.class_grade + rec.behavior_grade;
+                rows += `
+                    <tr>
+                        <td>${rec.student_name}</td>
+                        <td>${rec.date}</td>
+                        <td>${rec.mass_grade}</td>
+                        <td>${rec.communion_grade}</td>
+                        <td>${rec.class_grade}</td>
+                        <td>${rec.behavior_grade}</td>
+                        <td>${rec.notes || ''}</td>
+                        <td class="total-grade">${total}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('adminContent').innerHTML = `
+                <div>
+                    <div class="header" style="border-bottom: none;">
+                        <div class="logo-container">
+                            <img src="${LOGO_URL}" alt="شعار الخدمة" class="logo-img">
+                            <span class="logo-text">تقرير مفصل</span>
+                        </div>
+                        <div>
+                            <button class="btn" id="backToSummaryAdminBtn">🔙 العودة للموجز</button>
+                        </div>
+                    </div>
+                    <div class="date-range">
+                        <label>من تاريخ:</label>
+                        <input type="date" id="startDateAdmin" value="${startDate}">
+                        <label>إلى تاريخ:</label>
+                        <input type="date" id="endDateAdmin" value="${endDate}">
+                        <button class="btn" id="fetchRangeAdminBtn">عرض</button>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>الاسم</th>
+                                    <th>التاريخ</th>
+                                    <th>القداس</th>
+                                    <th>التناول</th>
+                                    <th>الخدمة</th>
+                                    <th>السلوك</th>
+                                    <th>ملاحظات</th>
+                                    <th>المجموع</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rows}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="message"></div>
+                </div>
+            `;
+
+            document.getElementById('backToSummaryAdminBtn').addEventListener('click', () => {
+                renderReportTableAdmin(classId, startDate, endDate);
+            });
+            document.getElementById('fetchRangeAdminBtn').addEventListener('click', async () => {
+                const newStart = document.getElementById('startDateAdmin').value;
+                const newEnd = document.getElementById('endDateAdmin').value;
+                attendanceRecords = await fetchAttendanceForDateRange(classId, newStart, newEnd);
+                renderDetailedReportAdmin(classId, newStart, newEnd);
             });
         }
 
+        // دالة عرض التقرير الشامل لجميع الفصول
+        async function renderAllClassesReport(allStudents, attendanceRecords, startDate, endDate) {
+            const classMap = new Map(allClasses.map(c => [c.id, c.class_name]));
+            const studentMap = new Map(allStudents.map(s => [s.id, { name: s.name, class_id: s.class_id }]));
+
+            // تجميع البيانات حسب الفصل
+            const classesData = {};
+            allClasses.forEach(cls => {
+                const classStudents = allStudents.filter(s => s.class_id === cls.id);
+                const classAttendance = attendanceRecords.filter(r => classStudents.some(s => s.id === r.student_id));
+                classesData[cls.id] = {
+                    className: cls.class_name,
+                    students: classStudents,
+                    attendance: classAttendance
+                };
+            });
+
+            // إحصائيات سريعة لكل فصل
+            const statsHTML = allClasses.map(cls => {
+                const data = classesData[cls.id];
+                const presentCount = data.attendance.filter(r => r.mass_grade === 10 && r.communion_grade === 10 && r.class_grade === 10).length;
+                return `
+                    <div class="stat-card" style="min-width: 150px;">
+                        <h4>${cls.class_name}</h4>
+                        <div>المخدومين: ${data.students.length}</div>
+                        <div>الحضور الكامل: ${presentCount}</div>
+                    </div>
+                `;
+            }).join('');
+
+            // عرض التقرير في adminContent
+            document.getElementById('adminContent').innerHTML = `
+                <div>
+                    <div class="header" style="border-bottom: none;">
+                        <div class="logo-container">
+                            <img src="${LOGO_URL}" alt="شعار الخدمة" class="logo-img">
+                            <span class="logo-text">تقرير شامل لجميع الفصول</span>
+                        </div>
+                        <div>
+                            <button class="btn" id="backToAdminMain">🔙 العودة</button>
+                        </div>
+                    </div>
+                    <div class="date-range">
+                        <label>من تاريخ:</label>
+                        <input type="date" id="startDateAll" value="${startDate}">
+                        <label>إلى تاريخ:</label>
+                        <input type="date" id="endDateAll" value="${endDate}">
+                        <button class="btn" id="fetchAllRangeBtn">عرض</button>
+                    </div>
+                    <div class="dashboard-summary" style="flex-wrap: wrap;">
+                        ${statsHTML}
+                    </div>
+                    ${allClasses.map(cls => {
+                        const data = classesData[cls.id];
+                        if (data.attendance.length === 0) return '';
+
+                        const summaryData = data.students.map(s => {
+                            const studentRecords = data.attendance.filter(r => r.student_id === s.id);
+                            const totalDays = studentRecords.length;
+                            const totalMass = studentRecords.reduce((sum, r) => sum + (r.mass_grade || 0), 0);
+                            const totalCommunion = studentRecords.reduce((sum, r) => sum + (r.communion_grade || 0), 0);
+                            const totalClass = studentRecords.reduce((sum, r) => sum + (r.class_grade || 0), 0);
+                            const totalBehavior = studentRecords.reduce((sum, r) => sum + (r.behavior_grade || 0), 0);
+                            const grandTotal = totalMass + totalCommunion + totalClass + totalBehavior;
+                            return {
+                                name: s.name,
+                                totalDays,
+                                totalMass,
+                                totalCommunion,
+                                totalClass,
+                                totalBehavior,
+                                grandTotal
+                            };
+                        }).filter(s => s.totalDays > 0);
+
+                        return `
+                            <h3 style="margin: 20px 0 10px; color: #1e3a8a;">${cls.class_name}</h3>
+                            <div class="table-wrapper">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>الاسم</th>
+                                            <th>عدد أيام الحضور</th>
+                                            <th>إجمالي القداس</th>
+                                            <th>إجمالي التناول</th>
+                                            <th>إجمالي الخدمة</th>
+                                            <th>إجمالي السلوك</th>
+                                            <th>المجموع الكلي</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${summaryData.map(s => `
+                                            <tr>
+                                                <td>${s.name}</td>
+                                                <td>${s.totalDays}</td>
+                                                <td>${s.totalMass}</td>
+                                                <td>${s.totalCommunion}</td>
+                                                <td>${s.totalClass}</td>
+                                                <td>${s.totalBehavior}</td>
+                                                <td class="total-grade">${s.grandTotal}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+                    }).join('')}
+                    <div id="message"></div>
+                </div>
+            `;
+
+            document.getElementById('backToAdminMain').addEventListener('click', () => {
+                loadAdminView();
+            });
+            document.getElementById('fetchAllRangeBtn').addEventListener('click', async () => {
+                const newStart = document.getElementById('startDateAll').value;
+                const newEnd = document.getElementById('endDateAll').value;
+                const newAttendance = await fetchAttendanceForAllClasses(newStart, newEnd);
+                const allStudents = await fetchAllStudents();
+                renderAllClassesReport(allStudents, newAttendance, newStart, newEnd);
+            });
+        }
+
+        // دالة حفظ الحضور اليومي
         async function saveDailyAttendance(classId, date) {
-            // رسالة تأكيد قبل الحفظ
             if (!confirm('هل أنت متأكد من حفظ البيانات؟')) {
                 return;
             }
@@ -1351,7 +1744,26 @@
             init();
         }
 
-        console.log('الملف النهائي مع تحسينات الموبايل ورسالة التأكيد ومؤشر التحميل');
+        // دوال عرض الكوبونات (تُستدعى من الأزرار)
+        window.showCoupon = async function(studentId, startDate, endDate) {
+            const student = window.students?.find(s => s.id === studentId);
+            if (!student) return;
+
+            const studentRecords = window.attendanceRecords?.filter(r => r.student_id === studentId) || [];
+            const className = window.currentUser?.classes?.class_name || 'الفصل';
+            const couponHTML = generateCouponHTML(student.name, className, startDate, endDate, studentRecords);
+
+            document.getElementById('couponInner').innerHTML = couponHTML + `
+                <button class="print-btn" onclick="printCurrentCoupon()">🖨️ طباعة الكوبون</button>
+            `;
+            openCouponModal();
+        };
+
+        window.printCurrentCoupon = function() {
+            const couponHTML = document.getElementById('couponInner').innerHTML;
+            printCoupon(couponHTML);
+        };
+
         init();
     </script>
 </body>
