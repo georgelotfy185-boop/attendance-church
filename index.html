@@ -22,7 +22,7 @@
             /* خلفية مائية خفيفة جداً بعد الدخول */
             background-image: url('https://i.ibb.co/4gP3wDDV/image.png');
             background-repeat: repeat;
-            background-size: 200px 200px; /* تكبير حجم الخلفية */
+            background-size: 200px 200px;
             background-position: center;
             background-attachment: fixed;
             opacity: 0.98;
@@ -35,8 +35,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(255, 255, 255, 0.85); /* طبقة بيضاء شفافة */
-            pointer-events: none; /* للسماح بالتفاعل مع العناصر */
+            background-color: rgba(255, 255, 255, 0.85);
+            pointer-events: none;
             z-index: 0;
         }
         .container {
@@ -88,30 +88,49 @@
             font-size: 16px;
             font-weight: 500;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: background 0.2s;
+            transition: background 0.2s, opacity 0.2s;
             margin: 5px;
             min-width: 120px;
+            position: relative;
         }
         .btn:hover {
             background: #2563eb;
         }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
         .btn-success {
             background: #10b981;
         }
-        .btn-success:hover {
+        .btn-success:hover:not(:disabled) {
             background: #059669;
         }
         .btn-warning {
             background: #f59e0b;
         }
-        .btn-warning:hover {
+        .btn-warning:hover:not(:disabled) {
             background: #d97706;
         }
         .btn-info {
             background: #3b82f6;
         }
-        .btn-info:hover {
+        .btn-info:hover:not(:disabled) {
             background: #1e3a8a;
+        }
+        /* مؤشر التحميل (spinner) */
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 8px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
         .login-form {
             max-width: 400px;
@@ -219,6 +238,12 @@
             background: white;
             font-size: 16px;
         }
+        /* محاذاة أسماء الطلاب إلى اليمين مع مسافة بادئة */
+        td:first-child {
+            text-align: right;
+            padding-right: 20px;
+            font-weight: 500;
+        }
         .grade-input {
             width: 80px;
             padding: 12px;
@@ -279,10 +304,15 @@
             width: 100%;
             cursor: pointer;
             box-shadow: 0 6px 12px rgba(16,185,129,0.3);
-            transition: background 0.2s;
+            transition: background 0.2s, opacity 0.2s;
             margin-top: 10px;
+            position: relative;
         }
-        .save-btn:hover {
+        .save-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .save-btn:hover:not(:disabled) {
             background: #059669;
         }
         .message {
@@ -326,6 +356,22 @@
                 padding: 10px;
             }
         }
+        /* للشاشات الصغيرة جداً (أقل من 400px) */
+        @media (max-width: 400px) {
+            .grade-input, .behavior-select {
+                width: 100%;
+                max-width: 70px;
+                padding: 10px;
+            }
+            td:first-child {
+                padding-right: 10px;
+                font-size: 14px;
+            }
+            .btn, .save-btn {
+                font-size: 16px;
+                padding: 14px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -344,6 +390,7 @@
         let students = [];
         let attendanceRecords = [];
         let allClasses = []; // لتخزين جميع الفصول
+        let isLoading = false; // حالة التحميل
 
         const app = document.getElementById('app');
 
@@ -1227,6 +1274,18 @@
         }
 
         async function saveDailyAttendance(classId, date) {
+            // رسالة تأكيد قبل الحفظ
+            if (!confirm('هل أنت متأكد من حفظ البيانات؟')) {
+                return;
+            }
+
+            isLoading = true;
+            const saveBtn = document.querySelector('.save-btn');
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = 'جاري الحفظ <span class="spinner"></span>';
+            }
+
             const records = [];
             const inputs = document.querySelectorAll('[data-id]');
             const studentMap = new Map();
@@ -1267,6 +1326,12 @@
                 }
             }
 
+            isLoading = false;
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = 'حفظ الحضور';
+            }
+
             const msgDiv = document.getElementById('message');
             if (hasError) {
                 msgDiv.innerHTML = '<div class="message error">حدث خطأ أثناء الحفظ، بعض السجلات قد لا تكون محفوظة.</div>';
@@ -1286,7 +1351,7 @@
             init();
         }
 
-        console.log('الملف النهائي مع خلفية مائية خفيفة بعد الدخول');
+        console.log('الملف النهائي مع تحسينات الموبايل ورسالة التأكيد ومؤشر التحميل');
         init();
     </script>
 </body>
