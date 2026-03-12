@@ -515,13 +515,17 @@
 
         const LOGO_URL = 'https://i.ibb.co/4gP3wDDV/image.png';
 
-        // متغيرات عامة للفلاتر
-        let filteredStudentsDaily = [];
-        let filteredStudentsDailyAdmin = [];
-        let filteredReportData = [];
-        let filteredReportDataAdmin = [];
+        // دالة لتطبيع النص (إزالة التشكيل) لتحسين البحث
+        function normalizeText(text) {
+            if (!text) return '';
+            return text.toLowerCase()
+                .replace(/[أإآ]/g, 'ا')
+                .replace(/[ى]/g, 'ي')
+                .replace(/[ؤ]/g, 'و')
+                .replace(/[ئ]/g, 'ي')
+                .replace(/[ة]/g, 'ه');
+        }
 
-        // دوال مساعدة للتواريخ
         function getTodayDate() {
             const today = new Date();
             const yyyy = today.getFullYear();
@@ -539,7 +543,6 @@
             return `${yyyy}-${mm}-${dd}`;
         }
 
-        // دوال جلب البيانات
         async function fetchAllClasses() {
             const { data, error } = await supabaseClient.from('classes').select('*');
             if (error) {
@@ -966,7 +969,7 @@
             });
         }
 
-        // ========== دوال التسجيل اليومي مع فلاتر مبسطة باستخدام oninput ==========
+        // ========== دوال التسجيل اليومي ==========
         function renderDailyView() {
             const today = getTodayDate();
             attendanceRecords = [];
@@ -974,12 +977,12 @@
         }
 
         function filterDailyTable(value) {
-            const filterValue = value.toLowerCase();
+            const filterValue = normalizeText(value);
             const rows = document.querySelectorAll('#dailyTableBody tr');
             rows.forEach(row => {
                 const nameCell = row.cells[0];
                 if (nameCell) {
-                    const name = nameCell.textContent.toLowerCase();
+                    const name = normalizeText(nameCell.textContent);
                     if (name.includes(filterValue)) {
                         row.style.display = '';
                     } else {
@@ -1095,12 +1098,12 @@
         }
 
         function filterDailyTableAdmin(value) {
-            const filterValue = value.toLowerCase();
+            const filterValue = normalizeText(value);
             const rows = document.querySelectorAll('#dailyTableBodyAdmin tr');
             rows.forEach(row => {
                 const nameCell = row.cells[0];
                 if (nameCell) {
-                    const name = nameCell.textContent.toLowerCase();
+                    const name = normalizeText(nameCell.textContent);
                     if (name.includes(filterValue)) {
                         row.style.display = '';
                     } else {
@@ -1207,7 +1210,7 @@
             });
         }
 
-        // ========== دوال التقارير مع فلاتر مبسطة باستخدام oninput ==========
+        // ========== دوال التقارير ==========
         function renderReportTable(startDate, endDate) {
             const summaryData = students.map(s => {
                 const studentRecords = attendanceRecords.filter(r => r.student_id === s.id);
@@ -1230,181 +1233,190 @@
                 };
             });
 
-            // تخزين في نطاق عام
-            window.reportSummaryData = summaryData;
-
-            function renderTable(filteredData) {
-                let rows = '';
-                filteredData.forEach(s => {
-                    rows += `
-                        <tr>
-                            <td>${s.name}</td>
-                            <td>${s.totalDays}</td>
-                            <td>${s.totalMass}</td>
-                            <td>${s.totalCommunion}</td>
-                            <td>${s.totalClass}</td>
-                            <td>${s.totalBehavior}</td>
-                            <td class="total-grade">${s.grandTotal}</td>
-                            <td>
-                                <button class="btn btn-coupon" onclick="showCoupon('${s.id}', '${startDate}', '${endDate}')">🎫 كوبون</button>
-                            </td>
-                        </tr>
-                    `;
-                });
-
-                app.innerHTML = `
-                    <div>
-                        <div class="header">
-                            <div class="logo-container">
-                                <img src="${LOGO_URL}" alt="شعار الخدمة" class="logo-img">
-                                <span class="logo-text">${currentUser?.classes?.class_name || 'الفصل'} - تقرير موجز</span>
-                            </div>
-                            <div>
-                                <button class="btn" id="backToDailyBtn">🔙 العودة للتسجيل</button>
-                                <button class="btn btn-info" id="toggleReportMode">📊 عرض التفاصيل</button>
-                                <button class="btn btn-success" id="exportSummaryExcel">📥 تصدير Excel</button>
-                                <button class="btn btn-coupon" id="printAllCoupons">🖨️ طباعة كوبونات الفصل</button>
-                                <button class="btn btn-success" id="exportCouponsExcel">📥 تصدير الكوبونات Excel</button>
-                                <button class="btn" id="logoutBtn">تسجيل خروج</button>
-                            </div>
-                        </div>
-                        <div class="date-range">
-                            <label>من تاريخ:</label>
-                            <input type="date" id="startDate" value="${startDate}">
-                            <label>إلى تاريخ:</label>
-                            <input type="date" id="endDate" value="${endDate}">
-                            <button class="btn" id="fetchRangeBtn">عرض</button>
-                        </div>
-                        <div style="background: #f9fafb; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
-                            <div>
-                                <label for="reportNameFilter">🔍 فلتر الاسم:</label>
-                                <input type="text" id="reportNameFilter" placeholder="اكتب جزءاً من الاسم" class="filter-input" style="width: 150px;" oninput="filterReportTable()">
-                            </div>
-                            <div>
-                                <label for="reportMassFilter">القداس ≥:</label>
-                                <input type="number" id="reportMassFilter" min="0" max="100" value="0" class="filter-number" oninput="filterReportTable()">
-                            </div>
-                            <div>
-                                <label for="reportCommunionFilter">التناول ≥:</label>
-                                <input type="number" id="reportCommunionFilter" min="0" max="100" value="0" class="filter-number" oninput="filterReportTable()">
-                            </div>
-                            <div>
-                                <label for="reportClassFilter">الخدمة ≥:</label>
-                                <input type="number" id="reportClassFilter" min="0" max="100" value="0" class="filter-number" oninput="filterReportTable()">
-                            </div>
-                            <button class="btn" id="clearReportFilters">مسح الفلاتر</button>
-                        </div>
-                        <div class="dashboard-summary"></div>
-                        <div class="table-wrapper">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>الاسم</th>
-                                        <th>عدد أيام الحضور</th>
-                                        <th>إجمالي القداس</th>
-                                        <th>إجمالي التناول</th>
-                                        <th>إجمالي الخدمة</th>
-                                        <th>إجمالي السلوك</th>
-                                        <th>المجموع الكلي</th>
-                                        <th>كوبون</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="reportTableBody">
-                                    ${rows}
-                                </tbody>
-                            </table>
-                        </div>
-                        <div id="message"></div>
-                    </div>
+            let rows = '';
+            summaryData.forEach(s => {
+                rows += `
+                    <tr>
+                        <td>${s.name}</td>
+                        <td>${s.totalDays}</td>
+                        <td>${s.totalMass}</td>
+                        <td>${s.totalCommunion}</td>
+                        <td>${s.totalClass}</td>
+                        <td>${s.totalBehavior}</td>
+                        <td class="total-grade">${s.grandTotal}</td>
+                        <td>
+                            <button class="btn btn-coupon" onclick="showCoupon('${s.id}', '${startDate}', '${endDate}')">🎫 كوبون</button>
+                        </td>
+                    </tr>
                 `;
+            });
 
-                updateDashboard(attendanceRecords);
+            app.innerHTML = `
+                <div>
+                    <div class="header">
+                        <div class="logo-container">
+                            <img src="${LOGO_URL}" alt="شعار الخدمة" class="logo-img">
+                            <span class="logo-text">${currentUser?.classes?.class_name || 'الفصل'} - تقرير موجز</span>
+                        </div>
+                        <div>
+                            <button class="btn" id="backToDailyBtn">🔙 العودة للتسجيل</button>
+                            <button class="btn btn-info" id="toggleReportMode">📊 عرض التفاصيل</button>
+                            <button class="btn btn-success" id="exportSummaryExcel">📥 تصدير Excel</button>
+                            <button class="btn btn-coupon" id="printAllCoupons">🖨️ طباعة كوبونات الفصل</button>
+                            <button class="btn btn-success" id="exportCouponsExcel">📥 تصدير الكوبونات Excel</button>
+                            <button class="btn" id="logoutBtn">تسجيل خروج</button>
+                        </div>
+                    </div>
+                    <div class="date-range">
+                        <label>من تاريخ:</label>
+                        <input type="date" id="startDate" value="${startDate}">
+                        <label>إلى تاريخ:</label>
+                        <input type="date" id="endDate" value="${endDate}">
+                        <button class="btn" id="fetchRangeBtn">عرض</button>
+                    </div>
+                    <div style="background: #f9fafb; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
+                        <div>
+                            <label for="reportNameFilter">🔍 فلتر الاسم:</label>
+                            <input type="text" id="reportNameFilter" placeholder="اكتب جزءاً من الاسم" class="filter-input" style="width: 150px;" oninput="filterReportTable()">
+                        </div>
+                        <div>
+                            <label for="reportMassFilter">القداس ≥:</label>
+                            <input type="number" id="reportMassFilter" min="0" max="100" value="0" class="filter-number" oninput="filterReportTable()">
+                        </div>
+                        <div>
+                            <label for="reportCommunionFilter">التناول ≥:</label>
+                            <input type="number" id="reportCommunionFilter" min="0" max="100" value="0" class="filter-number" oninput="filterReportTable()">
+                        </div>
+                        <div>
+                            <label for="reportClassFilter">الخدمة ≥:</label>
+                            <input type="number" id="reportClassFilter" min="0" max="100" value="0" class="filter-number" oninput="filterReportTable()">
+                        </div>
+                        <button class="btn" id="clearReportFilters">مسح الفلاتر</button>
+                    </div>
+                    <div class="dashboard-summary"></div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>الاسم</th>
+                                    <th>عدد أيام الحضور</th>
+                                    <th>إجمالي القداس</th>
+                                    <th>إجمالي التناول</th>
+                                    <th>إجمالي الخدمة</th>
+                                    <th>إجمالي السلوك</th>
+                                    <th>المجموع الكلي</th>
+                                    <th>كوبون</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportTableBody">
+                                ${rows}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="message"></div>
+                </div>
+            `;
 
-                document.getElementById('clearReportFilters').addEventListener('click', () => {
-                    document.getElementById('reportNameFilter').value = '';
-                    document.getElementById('reportMassFilter').value = '0';
-                    document.getElementById('reportCommunionFilter').value = '0';
-                    document.getElementById('reportClassFilter').value = '0';
-                    filterReportTable();
-                });
+            updateDashboard(attendanceRecords);
 
-                document.getElementById('backToDailyBtn').addEventListener('click', async () => {
-                    viewMode = 'daily';
-                    renderDailyView();
-                });
-                document.getElementById('logoutBtn').addEventListener('click', logout);
-                document.getElementById('toggleReportMode').addEventListener('click', () => {
-                    renderDetailedReport(startDate, endDate);
-                });
-                document.getElementById('exportSummaryExcel').addEventListener('click', () => {
-                    const dataForExport = filteredData.map(s => ({
-                        student_name: s.name,
-                        total_days: s.totalDays,
-                        total_mass: s.totalMass,
-                        total_communion: s.totalCommunion,
-                        total_class: s.totalClass,
-                        total_behavior: s.totalBehavior,
-                        grand_total: s.grandTotal
-                    }));
-                    const wsData = [['الاسم', 'عدد أيام الحضور', 'إجمالي القداس', 'إجمالي التناول', 'إجمالي الخدمة', 'إجمالي السلوك', 'المجموع الكلي']];
-                    dataForExport.forEach(s => {
-                        wsData.push([s.student_name, s.total_days, s.total_mass, s.total_communion, s.total_class, s.total_behavior, s.grand_total]);
-                    });
-                    const wb = XLSX.utils.book_new();
-                    const ws = XLSX.utils.aoa_to_sheet(wsData);
-                    XLSX.utils.book_append_sheet(wb, ws, 'تقرير موجز');
-                    XLSX.writeFile(wb, `تقرير_موجز_${currentUser?.classes?.class_name}_${new Date().toLocaleDateString()}.xlsx`);
-                });
-                document.getElementById('printAllCoupons').addEventListener('click', () => {
-                    const studentsWithGrades = filteredData.filter(s => s.grandTotal > 0);
-                    if (studentsWithGrades.length === 0) {
-                        alert('لا يوجد طلاب بمجموع أكبر من صفر لطباعة كوبوناتهم.');
-                        return;
-                    }
-                    let couponsHTML = '';
-                    studentsWithGrades.forEach(s => {
-                        const studentRecords = attendanceRecords.filter(r => r.student_id === s.id);
-                        couponsHTML += generateCouponHTML(s.name, currentUser?.classes?.class_name || 'الفصل', startDate, endDate, studentRecords);
-                        couponsHTML += '<div style="page-break-after: always;"></div>';
-                    });
-                    printCoupon(couponsHTML);
-                });
-                document.getElementById('exportCouponsExcel').addEventListener('click', () => {
-                    const studentsWithGrades = filteredData.filter(s => s.grandTotal > 0);
-                    if (studentsWithGrades.length === 0) {
-                        alert('لا يوجد طلاب بمجموع أكبر من صفر لتصدير كوبوناتهم.');
-                        return;
-                    }
-                    exportCouponsToExcel(studentsWithGrades, currentUser?.classes?.class_name || 'الفصل', startDate, endDate);
-                });
-                document.getElementById('fetchRangeBtn').addEventListener('click', async () => {
-                    const newStart = document.getElementById('startDate').value;
-                    const newEnd = document.getElementById('endDate').value;
-                    attendanceRecords = await fetchAttendanceForDateRange(currentClassId, newStart, newEnd);
-                    renderReportTable(newStart, newEnd);
-                });
-            }
-
-            // دالة الفلتر العامة
+            // دالة الفلتر العامة للتقرير
             window.filterReportTable = function() {
-                const nameFilter = document.getElementById('reportNameFilter')?.value?.toLowerCase() || '';
+                const nameFilter = normalizeText(document.getElementById('reportNameFilter')?.value || '');
                 const massFilter = parseInt(document.getElementById('reportMassFilter')?.value) || 0;
                 const communionFilter = parseInt(document.getElementById('reportCommunionFilter')?.value) || 0;
                 const classFilter = parseInt(document.getElementById('reportClassFilter')?.value) || 0;
 
-                const filtered = window.reportSummaryData.filter(item => {
-                    const nameMatch = nameFilter === '' || item.name.toLowerCase().includes(nameFilter);
-                    const massMatch = item.totalMass >= massFilter;
-                    const communionMatch = item.totalCommunion >= communionFilter;
-                    const classMatch = item.totalClass >= classFilter;
-                    return nameMatch && massMatch && communionMatch && classMatch;
-                });
+                const rows = document.querySelectorAll('#reportTableBody tr');
+                rows.forEach(row => {
+                    const nameCell = row.cells[0];
+                    const massCell = row.cells[2];
+                    const communionCell = row.cells[3];
+                    const classCell = row.cells[4];
 
-                renderTable(filtered);
+                    if (nameCell && massCell && communionCell && classCell) {
+                        const name = normalizeText(nameCell.textContent);
+                        const mass = parseInt(massCell.textContent) || 0;
+                        const communion = parseInt(communionCell.textContent) || 0;
+                        const classVal = parseInt(classCell.textContent) || 0;
+
+                        const nameMatch = nameFilter === '' || name.includes(nameFilter);
+                        const massMatch = mass >= massFilter;
+                        const communionMatch = communion >= communionFilter;
+                        const classMatch = classVal >= classFilter;
+
+                        if (nameMatch && massMatch && communionMatch && classMatch) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    }
+                });
             };
 
-            renderTable(summaryData);
-            window.reportSummaryData = summaryData;
+            document.getElementById('clearReportFilters').addEventListener('click', () => {
+                document.getElementById('reportNameFilter').value = '';
+                document.getElementById('reportMassFilter').value = '0';
+                document.getElementById('reportCommunionFilter').value = '0';
+                document.getElementById('reportClassFilter').value = '0';
+                filterReportTable();
+            });
+
+            document.getElementById('backToDailyBtn').addEventListener('click', async () => {
+                viewMode = 'daily';
+                renderDailyView();
+            });
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('toggleReportMode').addEventListener('click', () => {
+                renderDetailedReport(startDate, endDate);
+            });
+            document.getElementById('exportSummaryExcel').addEventListener('click', () => {
+                const dataForExport = summaryData.map(s => ({
+                    student_name: s.name,
+                    total_days: s.totalDays,
+                    total_mass: s.totalMass,
+                    total_communion: s.totalCommunion,
+                    total_class: s.totalClass,
+                    total_behavior: s.totalBehavior,
+                    grand_total: s.grandTotal
+                }));
+                const wsData = [['الاسم', 'عدد أيام الحضور', 'إجمالي القداس', 'إجمالي التناول', 'إجمالي الخدمة', 'إجمالي السلوك', 'المجموع الكلي']];
+                dataForExport.forEach(s => {
+                    wsData.push([s.student_name, s.total_days, s.total_mass, s.total_communion, s.total_class, s.total_behavior, s.grand_total]);
+                });
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet(wsData);
+                XLSX.utils.book_append_sheet(wb, ws, 'تقرير موجز');
+                XLSX.writeFile(wb, `تقرير_موجز_${currentUser?.classes?.class_name}_${new Date().toLocaleDateString()}.xlsx`);
+            });
+            document.getElementById('printAllCoupons').addEventListener('click', () => {
+                const studentsWithGrades = summaryData.filter(s => s.grandTotal > 0);
+                if (studentsWithGrades.length === 0) {
+                    alert('لا يوجد طلاب بمجموع أكبر من صفر لطباعة كوبوناتهم.');
+                    return;
+                }
+                let couponsHTML = '';
+                studentsWithGrades.forEach(s => {
+                    const studentRecords = attendanceRecords.filter(r => r.student_id === s.id);
+                    couponsHTML += generateCouponHTML(s.name, currentUser?.classes?.class_name || 'الفصل', startDate, endDate, studentRecords);
+                    couponsHTML += '<div style="page-break-after: always;"></div>';
+                });
+                printCoupon(couponsHTML);
+            });
+            document.getElementById('exportCouponsExcel').addEventListener('click', () => {
+                const studentsWithGrades = summaryData.filter(s => s.grandTotal > 0);
+                if (studentsWithGrades.length === 0) {
+                    alert('لا يوجد طلاب بمجموع أكبر من صفر لتصدير كوبوناتهم.');
+                    return;
+                }
+                exportCouponsToExcel(studentsWithGrades, currentUser?.classes?.class_name || 'الفصل', startDate, endDate);
+            });
+            document.getElementById('fetchRangeBtn').addEventListener('click', async () => {
+                const newStart = document.getElementById('startDate').value;
+                const newEnd = document.getElementById('endDate').value;
+                attendanceRecords = await fetchAttendanceForDateRange(currentClassId, newStart, newEnd);
+                renderReportTable(newStart, newEnd);
+            });
+
             window.currentClassId = currentClassId;
             window.currentUser = currentUser;
             window.attendanceRecords = attendanceRecords;
@@ -1514,159 +1526,169 @@
                 };
             });
 
-            window.reportSummaryDataAdmin = summaryData;
-
-            function renderTable(filteredData) {
-                let rows = '';
-                filteredData.forEach(s => {
-                    rows += `
-                        <tr>
-                            <td>${s.name}</td>
-                            <td>${s.totalDays}</td>
-                            <td>${s.totalMass}</td>
-                            <td>${s.totalCommunion}</td>
-                            <td>${s.totalClass}</td>
-                            <td>${s.totalBehavior}</td>
-                            <td class="total-grade">${s.grandTotal}</td>
-                            <td>
-                                <button class="btn btn-coupon" onclick="showCoupon('${s.id}', '${startDate}', '${endDate}')">🎫 كوبون</button>
-                            </td>
-                        </tr>
-                    `;
-                });
-
-                document.getElementById('adminContent').innerHTML = `
-                    <div>
-                        <div class="header" style="border-bottom: none;">
-                            <div class="logo-container">
-                                <img src="${LOGO_URL}" alt="شعار الخدمة" class="logo-img">
-                                <span class="logo-text">تقرير الفصل</span>
-                            </div>
-                            <div>
-                                <button class="btn" id="backToDailyAdminBtn">🔙 العودة للتسجيل</button>
-                                <button class="btn btn-info" id="toggleDetailedAdmin">📊 عرض التفاصيل</button>
-                                <button class="btn btn-coupon" id="printAllCouponsAdmin">🖨️ طباعة كوبونات الفصل</button>
-                                <button class="btn btn-success" id="exportCouponsExcelAdmin">📥 تصدير الكوبونات Excel</button>
-                            </div>
-                        </div>
-                        <div class="date-range">
-                            <label>من تاريخ:</label>
-                            <input type="date" id="startDateAdmin" value="${startDate}">
-                            <label>إلى تاريخ:</label>
-                            <input type="date" id="endDateAdmin" value="${endDate}">
-                            <button class="btn" id="fetchRangeAdminBtn">عرض</button>
-                        </div>
-                        <div style="background: #f9fafb; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
-                            <div>
-                                <label for="reportNameFilterAdmin">🔍 فلتر الاسم:</label>
-                                <input type="text" id="reportNameFilterAdmin" placeholder="اكتب جزءاً من الاسم" class="filter-input" style="width: 150px;" oninput="filterReportTableAdmin()">
-                            </div>
-                            <div>
-                                <label for="reportMassFilterAdmin">القداس ≥:</label>
-                                <input type="number" id="reportMassFilterAdmin" min="0" max="100" value="0" class="filter-number" oninput="filterReportTableAdmin()">
-                            </div>
-                            <div>
-                                <label for="reportCommunionFilterAdmin">التناول ≥:</label>
-                                <input type="number" id="reportCommunionFilterAdmin" min="0" max="100" value="0" class="filter-number" oninput="filterReportTableAdmin()">
-                            </div>
-                            <div>
-                                <label for="reportClassFilterAdmin">الخدمة ≥:</label>
-                                <input type="number" id="reportClassFilterAdmin" min="0" max="100" value="0" class="filter-number" oninput="filterReportTableAdmin()">
-                            </div>
-                            <button class="btn" id="clearReportFiltersAdmin">مسح الفلاتر</button>
-                        </div>
-                        <div class="dashboard-summary"></div>
-                        <div class="table-wrapper">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>الاسم</th>
-                                        <th>عدد أيام الحضور</th>
-                                        <th>إجمالي القداس</th>
-                                        <th>إجمالي التناول</th>
-                                        <th>إجمالي الخدمة</th>
-                                        <th>إجمالي السلوك</th>
-                                        <th>المجموع الكلي</th>
-                                        <th>كوبون</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="reportTableBodyAdmin">
-                                    ${rows}
-                                </tbody>
-                            </table>
-                        </div>
-                        <div id="message"></div>
-                    </div>
+            let rows = '';
+            summaryData.forEach(s => {
+                rows += `
+                    <tr>
+                        <td>${s.name}</td>
+                        <td>${s.totalDays}</td>
+                        <td>${s.totalMass}</td>
+                        <td>${s.totalCommunion}</td>
+                        <td>${s.totalClass}</td>
+                        <td>${s.totalBehavior}</td>
+                        <td class="total-grade">${s.grandTotal}</td>
+                        <td>
+                            <button class="btn btn-coupon" onclick="showCoupon('${s.id}', '${startDate}', '${endDate}')">🎫 كوبون</button>
+                        </td>
+                    </tr>
                 `;
+            });
 
-                updateDashboard(attendanceRecords);
+            document.getElementById('adminContent').innerHTML = `
+                <div>
+                    <div class="header" style="border-bottom: none;">
+                        <div class="logo-container">
+                            <img src="${LOGO_URL}" alt="شعار الخدمة" class="logo-img">
+                            <span class="logo-text">تقرير الفصل</span>
+                        </div>
+                        <div>
+                            <button class="btn" id="backToDailyAdminBtn">🔙 العودة للتسجيل</button>
+                            <button class="btn btn-info" id="toggleDetailedAdmin">📊 عرض التفاصيل</button>
+                            <button class="btn btn-coupon" id="printAllCouponsAdmin">🖨️ طباعة كوبونات الفصل</button>
+                            <button class="btn btn-success" id="exportCouponsExcelAdmin">📥 تصدير الكوبونات Excel</button>
+                        </div>
+                    </div>
+                    <div class="date-range">
+                        <label>من تاريخ:</label>
+                        <input type="date" id="startDateAdmin" value="${startDate}">
+                        <label>إلى تاريخ:</label>
+                        <input type="date" id="endDateAdmin" value="${endDate}">
+                        <button class="btn" id="fetchRangeAdminBtn">عرض</button>
+                    </div>
+                    <div style="background: #f9fafb; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
+                        <div>
+                            <label for="reportNameFilterAdmin">🔍 فلتر الاسم:</label>
+                            <input type="text" id="reportNameFilterAdmin" placeholder="اكتب جزءاً من الاسم" class="filter-input" style="width: 150px;" oninput="filterReportTableAdmin()">
+                        </div>
+                        <div>
+                            <label for="reportMassFilterAdmin">القداس ≥:</label>
+                            <input type="number" id="reportMassFilterAdmin" min="0" max="100" value="0" class="filter-number" oninput="filterReportTableAdmin()">
+                        </div>
+                        <div>
+                            <label for="reportCommunionFilterAdmin">التناول ≥:</label>
+                            <input type="number" id="reportCommunionFilterAdmin" min="0" max="100" value="0" class="filter-number" oninput="filterReportTableAdmin()">
+                        </div>
+                        <div>
+                            <label for="reportClassFilterAdmin">الخدمة ≥:</label>
+                            <input type="number" id="reportClassFilterAdmin" min="0" max="100" value="0" class="filter-number" oninput="filterReportTableAdmin()">
+                        </div>
+                        <button class="btn" id="clearReportFiltersAdmin">مسح الفلاتر</button>
+                    </div>
+                    <div class="dashboard-summary"></div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>الاسم</th>
+                                    <th>عدد أيام الحضور</th>
+                                    <th>إجمالي القداس</th>
+                                    <th>إجمالي التناول</th>
+                                    <th>إجمالي الخدمة</th>
+                                    <th>إجمالي السلوك</th>
+                                    <th>المجموع الكلي</th>
+                                    <th>كوبون</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportTableBodyAdmin">
+                                ${rows}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="message"></div>
+                </div>
+            `;
 
-                document.getElementById('clearReportFiltersAdmin').addEventListener('click', () => {
-                    document.getElementById('reportNameFilterAdmin').value = '';
-                    document.getElementById('reportMassFilterAdmin').value = '0';
-                    document.getElementById('reportCommunionFilterAdmin').value = '0';
-                    document.getElementById('reportClassFilterAdmin').value = '0';
-                    filterReportTableAdmin();
-                });
-
-                document.getElementById('backToDailyAdminBtn').addEventListener('click', async () => {
-                    viewMode = 'daily';
-                    await renderDailyAdminView(classId);
-                });
-                document.getElementById('toggleDetailedAdmin').addEventListener('click', () => {
-                    renderDetailedReportAdmin(classId, startDate, endDate);
-                });
-                document.getElementById('printAllCouponsAdmin').addEventListener('click', () => {
-                    const studentsWithGrades = filteredData.filter(s => s.grandTotal > 0);
-                    if (studentsWithGrades.length === 0) {
-                        alert('لا يوجد طلاب بمجموع أكبر من صفر لطباعة كوبوناتهم.');
-                        return;
-                    }
-                    let couponsHTML = '';
-                    studentsWithGrades.forEach(s => {
-                        const studentRecords = attendanceRecords.filter(r => r.student_id === s.id);
-                        const className = allClasses.find(c => c.id === classId)?.class_name || 'الفصل';
-                        couponsHTML += generateCouponHTML(s.name, className, startDate, endDate, studentRecords);
-                        couponsHTML += '<div style="page-break-after: always;"></div>';
-                    });
-                    printCoupon(couponsHTML);
-                });
-                document.getElementById('exportCouponsExcelAdmin').addEventListener('click', () => {
-                    const studentsWithGrades = filteredData.filter(s => s.grandTotal > 0);
-                    if (studentsWithGrades.length === 0) {
-                        alert('لا يوجد طلاب بمجموع أكبر من صفر لتصدير كوبوناتهم.');
-                        return;
-                    }
-                    const className = allClasses.find(c => c.id === classId)?.class_name || 'الفصل';
-                    exportCouponsToExcel(studentsWithGrades, className, startDate, endDate);
-                });
-                document.getElementById('fetchRangeAdminBtn').addEventListener('click', async () => {
-                    const newStart = document.getElementById('startDateAdmin').value;
-                    const newEnd = document.getElementById('endDateAdmin').value;
-                    attendanceRecords = await fetchAttendanceForDateRange(classId, newStart, newEnd);
-                    renderReportTableAdmin(classId, newStart, newEnd);
-                });
-            }
+            updateDashboard(attendanceRecords);
 
             window.filterReportTableAdmin = function() {
-                const nameFilter = document.getElementById('reportNameFilterAdmin')?.value?.toLowerCase() || '';
+                const nameFilter = normalizeText(document.getElementById('reportNameFilterAdmin')?.value || '');
                 const massFilter = parseInt(document.getElementById('reportMassFilterAdmin')?.value) || 0;
                 const communionFilter = parseInt(document.getElementById('reportCommunionFilterAdmin')?.value) || 0;
                 const classFilter = parseInt(document.getElementById('reportClassFilterAdmin')?.value) || 0;
 
-                const filtered = window.reportSummaryDataAdmin.filter(item => {
-                    const nameMatch = nameFilter === '' || item.name.toLowerCase().includes(nameFilter);
-                    const massMatch = item.totalMass >= massFilter;
-                    const communionMatch = item.totalCommunion >= communionFilter;
-                    const classMatch = item.totalClass >= classFilter;
-                    return nameMatch && massMatch && communionMatch && classMatch;
-                });
+                const rows = document.querySelectorAll('#reportTableBodyAdmin tr');
+                rows.forEach(row => {
+                    const nameCell = row.cells[0];
+                    const massCell = row.cells[2];
+                    const communionCell = row.cells[3];
+                    const classCell = row.cells[4];
 
-                renderTable(filtered);
+                    if (nameCell && massCell && communionCell && classCell) {
+                        const name = normalizeText(nameCell.textContent);
+                        const mass = parseInt(massCell.textContent) || 0;
+                        const communion = parseInt(communionCell.textContent) || 0;
+                        const classVal = parseInt(classCell.textContent) || 0;
+
+                        const nameMatch = nameFilter === '' || name.includes(nameFilter);
+                        const massMatch = mass >= massFilter;
+                        const communionMatch = communion >= communionFilter;
+                        const classMatch = classVal >= classFilter;
+
+                        if (nameMatch && massMatch && communionMatch && classMatch) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    }
+                });
             };
 
-            renderTable(summaryData);
-            window.reportSummaryDataAdmin = summaryData;
+            document.getElementById('clearReportFiltersAdmin').addEventListener('click', () => {
+                document.getElementById('reportNameFilterAdmin').value = '';
+                document.getElementById('reportMassFilterAdmin').value = '0';
+                document.getElementById('reportCommunionFilterAdmin').value = '0';
+                document.getElementById('reportClassFilterAdmin').value = '0';
+                filterReportTableAdmin();
+            });
+
+            document.getElementById('backToDailyAdminBtn').addEventListener('click', async () => {
+                viewMode = 'daily';
+                await renderDailyAdminView(classId);
+            });
+            document.getElementById('toggleDetailedAdmin').addEventListener('click', () => {
+                renderDetailedReportAdmin(classId, startDate, endDate);
+            });
+            document.getElementById('printAllCouponsAdmin').addEventListener('click', () => {
+                const studentsWithGrades = summaryData.filter(s => s.grandTotal > 0);
+                if (studentsWithGrades.length === 0) {
+                    alert('لا يوجد طلاب بمجموع أكبر من صفر لطباعة كوبوناتهم.');
+                    return;
+                }
+                let couponsHTML = '';
+                studentsWithGrades.forEach(s => {
+                    const studentRecords = attendanceRecords.filter(r => r.student_id === s.id);
+                    const className = allClasses.find(c => c.id === classId)?.class_name || 'الفصل';
+                    couponsHTML += generateCouponHTML(s.name, className, startDate, endDate, studentRecords);
+                    couponsHTML += '<div style="page-break-after: always;"></div>';
+                });
+                printCoupon(couponsHTML);
+            });
+            document.getElementById('exportCouponsExcelAdmin').addEventListener('click', () => {
+                const studentsWithGrades = summaryData.filter(s => s.grandTotal > 0);
+                if (studentsWithGrades.length === 0) {
+                    alert('لا يوجد طلاب بمجموع أكبر من صفر لتصدير كوبوناتهم.');
+                    return;
+                }
+                const className = allClasses.find(c => c.id === classId)?.class_name || 'الفصل';
+                exportCouponsToExcel(studentsWithGrades, className, startDate, endDate);
+            });
+            document.getElementById('fetchRangeAdminBtn').addEventListener('click', async () => {
+                const newStart = document.getElementById('startDateAdmin').value;
+                const newEnd = document.getElementById('endDateAdmin').value;
+                attendanceRecords = await fetchAttendanceForDateRange(classId, newStart, newEnd);
+                renderReportTableAdmin(classId, newStart, newEnd);
+            });
+
             window.currentClassId = classId;
             window.currentUser = currentUser;
             window.attendanceRecords = attendanceRecords;
