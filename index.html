@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>خدمة خمسة وستة - مدارس الأحد</title>
+    <title>خدمة خامسة وسادسة - مدارس الأحد</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <style>
@@ -966,16 +966,23 @@
         // ========== دوال التسجيل اليومي مع فلاتر ==========
         function renderDailyView() {
             const today = getTodayDate();
-            attendanceRecords = []; // نجعلها فارغة
+            attendanceRecords = [];
             renderDailyTable(today);
         }
 
         function renderDailyTable(selectedDate) {
-            let nameFilter = '';
-            let filteredStudents = students;
+            const originalStudents = students;
+            let filteredStudents = originalStudents;
 
             function applyFilter() {
-                filteredStudents = students.filter(s => s.name.includes(nameFilter));
+                const filterValue = document.getElementById('dailyNameFilter')?.value.toLowerCase() || '';
+                if (filterValue === '') {
+                    filteredStudents = originalStudents;
+                } else {
+                    filteredStudents = originalStudents.filter(s => 
+                        s.name.toLowerCase().includes(filterValue)
+                    );
+                }
                 renderTable();
             }
 
@@ -1031,8 +1038,8 @@
                         </div>
                         <div style="background: #f9fafb; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
                             <div style="flex: 1;">
-                                <label>🔍 بحث بالاسم:</label>
-                                <input type="text" id="nameFilter" placeholder="اكتب جزءاً من الاسم" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #d1d5db;">
+                                <label for="dailyNameFilter">🔍 بحث بالاسم:</label>
+                                <input type="text" id="dailyNameFilter" placeholder="اكتب جزءاً من الاسم" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #d1d5db;">
                             </div>
                         </div>
                         <div class="dashboard-summary"></div>
@@ -1062,10 +1069,7 @@
                 updateDashboard(attendanceRecords);
                 attachInputListeners();
 
-                document.getElementById('nameFilter').addEventListener('input', (e) => {
-                    nameFilter = e.target.value;
-                    applyFilter();
-                });
+                document.getElementById('dailyNameFilter')?.addEventListener('input', applyFilter);
                 document.getElementById('logoutBtn').addEventListener('click', logout);
                 document.getElementById('reportBtn').addEventListener('click', async () => {
                     viewMode = 'report';
@@ -1092,11 +1096,18 @@
         }
 
         function renderDailyTableAdmin(classId, selectedDate) {
-            let nameFilter = '';
-            let filteredStudents = students;
+            const originalStudents = students;
+            let filteredStudents = originalStudents;
 
             function applyFilter() {
-                filteredStudents = students.filter(s => s.name.includes(nameFilter));
+                const filterValue = document.getElementById('dailyNameFilterAdmin')?.value.toLowerCase() || '';
+                if (filterValue === '') {
+                    filteredStudents = originalStudents;
+                } else {
+                    filteredStudents = originalStudents.filter(s => 
+                        s.name.toLowerCase().includes(filterValue)
+                    );
+                }
                 renderTable();
             }
 
@@ -1138,7 +1149,7 @@
                     <div>
                         <div class="header" style="border-bottom: none;">
                             <div class="logo-container">
-                                <img src="${LOGO_URL}" alt="شعار الخخدمة" class="logo-img">
+                                <img src="${LOGO_URL}" alt="شعار الخدمة" class="logo-img">
                                 <span class="logo-text">${students.length ? 'تسجيل يومي' : ''}</span>
                             </div>
                             <div>
@@ -1151,8 +1162,8 @@
                         </div>
                         <div style="background: #f9fafb; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
                             <div style="flex: 1;">
-                                <label>🔍 بحث بالاسم:</label>
-                                <input type="text" id="nameFilterAdmin" placeholder="اكتب جزءاً من الاسم" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #d1d5db;">
+                                <label for="dailyNameFilterAdmin">🔍 بحث بالاسم:</label>
+                                <input type="text" id="dailyNameFilterAdmin" placeholder="اكتب جزءاً من الاسم" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #d1d5db;">
                             </div>
                         </div>
                         <div class="dashboard-summary"></div>
@@ -1182,10 +1193,7 @@
                 updateDashboard(attendanceRecords);
                 attachInputListeners();
 
-                document.getElementById('nameFilterAdmin').addEventListener('input', (e) => {
-                    nameFilter = e.target.value;
-                    applyFilter();
-                });
+                document.getElementById('dailyNameFilterAdmin')?.addEventListener('input', applyFilter);
                 document.getElementById('reportAdminBtn').addEventListener('click', async () => {
                     viewMode = 'report';
                     const endDate = getTodayDate();
@@ -1227,15 +1235,20 @@
                 };
             });
 
-            let filteredData = [...summaryData];
+            let filteredData = summaryData;
             let nameFilter = '';
             let massFilter = 0;
             let communionFilter = 0;
             let classFilter = 0;
 
             function applyFilters() {
+                nameFilter = document.getElementById('reportNameFilter')?.value.toLowerCase() || '';
+                massFilter = parseInt(document.getElementById('reportMassFilter')?.value) || 0;
+                communionFilter = parseInt(document.getElementById('reportCommunionFilter')?.value) || 0;
+                classFilter = parseInt(document.getElementById('reportClassFilter')?.value) || 0;
+
                 filteredData = summaryData.filter(item => {
-                    const nameMatch = item.name.includes(nameFilter);
+                    const nameMatch = nameFilter === '' || item.name.toLowerCase().includes(nameFilter);
                     const massMatch = item.totalMass >= massFilter;
                     const communionMatch = item.totalCommunion >= communionFilter;
                     const classMatch = item.totalClass >= classFilter;
@@ -1288,22 +1301,22 @@
                         </div>
                         <div style="background: #f9fafb; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
                             <div>
-                                <label>🔍 فلتر الاسم:</label>
-                                <input type="text" id="nameFilter" placeholder="اكتب جزءاً من الاسم" style="padding: 8px; border-radius: 8px; border: 1px solid #d1d5db; margin-right: 5px;">
+                                <label for="reportNameFilter">🔍 فلتر الاسم:</label>
+                                <input type="text" id="reportNameFilter" placeholder="اكتب جزءاً من الاسم" style="padding: 8px; border-radius: 8px; border: 1px solid #d1d5db;">
                             </div>
                             <div>
-                                <label>القداس ≥:</label>
-                                <input type="number" id="massFilter" min="0" max="100" value="0" style="width: 70px; padding: 8px; border-radius: 8px; border: 1px solid #d1d5db;">
+                                <label for="reportMassFilter">القداس ≥:</label>
+                                <input type="number" id="reportMassFilter" min="0" max="100" value="0" style="width: 70px; padding: 8px; border-radius: 8px; border: 1px solid #d1d5db;">
                             </div>
                             <div>
-                                <label>التناول ≥:</label>
-                                <input type="number" id="communionFilter" min="0" max="100" value="0" style="width: 70px; padding: 8px; border-radius: 8px; border: 1px solid #d1d5db;">
+                                <label for="reportCommunionFilter">التناول ≥:</label>
+                                <input type="number" id="reportCommunionFilter" min="0" max="100" value="0" style="width: 70px; padding: 8px; border-radius: 8px;">
                             </div>
                             <div>
-                                <label>الخدمة ≥:</label>
-                                <input type="number" id="classFilter" min="0" max="100" value="0" style="width: 70px; padding: 8px; border-radius: 8px; border: 1px solid #d1d5db;">
+                                <label for="reportClassFilter">الخدمة ≥:</label>
+                                <input type="number" id="reportClassFilter" min="0" max="100" value="0" style="width: 70px; padding: 8px;">
                             </div>
-                            <button class="btn" id="clearFilters">مسح الفلاتر</button>
+                            <button class="btn" id="clearReportFilters">مسح الفلاتر</button>
                         </div>
                         <div class="dashboard-summary"></div>
                         <div class="table-wrapper">
@@ -1331,33 +1344,18 @@
 
                 updateDashboard(attendanceRecords);
 
-                document.getElementById('nameFilter').addEventListener('input', (e) => {
-                    nameFilter = e.target.value;
+                document.getElementById('reportNameFilter')?.addEventListener('input', applyFilters);
+                document.getElementById('reportMassFilter')?.addEventListener('input', applyFilters);
+                document.getElementById('reportCommunionFilter')?.addEventListener('input', applyFilters);
+                document.getElementById('reportClassFilter')?.addEventListener('input', applyFilters);
+                document.getElementById('clearReportFilters')?.addEventListener('click', () => {
+                    document.getElementById('reportNameFilter').value = '';
+                    document.getElementById('reportMassFilter').value = '0';
+                    document.getElementById('reportCommunionFilter').value = '0';
+                    document.getElementById('reportClassFilter').value = '0';
                     applyFilters();
                 });
-                document.getElementById('massFilter').addEventListener('input', (e) => {
-                    massFilter = parseInt(e.target.value) || 0;
-                    applyFilters();
-                });
-                document.getElementById('communionFilter').addEventListener('input', (e) => {
-                    communionFilter = parseInt(e.target.value) || 0;
-                    applyFilters();
-                });
-                document.getElementById('classFilter').addEventListener('input', (e) => {
-                    classFilter = parseInt(e.target.value) || 0;
-                    applyFilters();
-                });
-                document.getElementById('clearFilters').addEventListener('click', () => {
-                    document.getElementById('nameFilter').value = '';
-                    document.getElementById('massFilter').value = '0';
-                    document.getElementById('communionFilter').value = '0';
-                    document.getElementById('classFilter').value = '0';
-                    nameFilter = '';
-                    massFilter = 0;
-                    communionFilter = 0;
-                    classFilter = 0;
-                    applyFilters();
-                });
+
                 document.getElementById('backToDailyBtn').addEventListener('click', async () => {
                     viewMode = 'daily';
                     renderDailyView();
@@ -1526,15 +1524,20 @@
                 };
             });
 
-            let filteredData = [...summaryData];
+            let filteredData = summaryData;
             let nameFilter = '';
             let massFilter = 0;
             let communionFilter = 0;
             let classFilter = 0;
 
             function applyFilters() {
+                nameFilter = document.getElementById('reportNameFilterAdmin')?.value.toLowerCase() || '';
+                massFilter = parseInt(document.getElementById('reportMassFilterAdmin')?.value) || 0;
+                communionFilter = parseInt(document.getElementById('reportCommunionFilterAdmin')?.value) || 0;
+                classFilter = parseInt(document.getElementById('reportClassFilterAdmin')?.value) || 0;
+
                 filteredData = summaryData.filter(item => {
-                    const nameMatch = item.name.includes(nameFilter);
+                    const nameMatch = nameFilter === '' || item.name.toLowerCase().includes(nameFilter);
                     const massMatch = item.totalMass >= massFilter;
                     const communionMatch = item.totalCommunion >= communionFilter;
                     const classMatch = item.totalClass >= classFilter;
@@ -1585,22 +1588,22 @@
                         </div>
                         <div style="background: #f9fafb; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
                             <div>
-                                <label>🔍 فلتر الاسم:</label>
-                                <input type="text" id="nameFilterAdmin" placeholder="اكتب جزءاً من الاسم" style="padding: 8px; border-radius: 8px; border: 1px solid #d1d5db;">
+                                <label for="reportNameFilterAdmin">🔍 فلتر الاسم:</label>
+                                <input type="text" id="reportNameFilterAdmin" placeholder="اكتب جزءاً من الاسم" style="padding: 8px; border-radius: 8px; border: 1px solid #d1d5db;">
                             </div>
                             <div>
-                                <label>القداس ≥:</label>
-                                <input type="number" id="massFilterAdmin" min="0" max="100" value="0" style="width: 70px; padding: 8px; border-radius: 8px;">
+                                <label for="reportMassFilterAdmin">القداس ≥:</label>
+                                <input type="number" id="reportMassFilterAdmin" min="0" max="100" value="0" style="width: 70px; padding: 8px; border-radius: 8px; border: 1px solid #d1d5db;">
                             </div>
                             <div>
-                                <label>التناول ≥:</label>
-                                <input type="number" id="communionFilterAdmin" min="0" max="100" value="0" style="width: 70px; padding: 8px;">
+                                <label for="reportCommunionFilterAdmin">التناول ≥:</label>
+                                <input type="number" id="reportCommunionFilterAdmin" min="0" max="100" value="0" style="width: 70px; padding: 8px;">
                             </div>
                             <div>
-                                <label>الخدمة ≥:</label>
-                                <input type="number" id="classFilterAdmin" min="0" max="100" value="0" style="width: 70px; padding: 8px;">
+                                <label for="reportClassFilterAdmin">الخدمة ≥:</label>
+                                <input type="number" id="reportClassFilterAdmin" min="0" max="100" value="0" style="width: 70px; padding: 8px;">
                             </div>
-                            <button class="btn" id="clearFiltersAdmin">مسح الفلاتر</button>
+                            <button class="btn" id="clearReportFiltersAdmin">مسح الفلاتر</button>
                         </div>
                         <div class="dashboard-summary"></div>
                         <div class="table-wrapper">
@@ -1628,33 +1631,18 @@
 
                 updateDashboard(attendanceRecords);
 
-                document.getElementById('nameFilterAdmin').addEventListener('input', (e) => {
-                    nameFilter = e.target.value;
+                document.getElementById('reportNameFilterAdmin')?.addEventListener('input', applyFilters);
+                document.getElementById('reportMassFilterAdmin')?.addEventListener('input', applyFilters);
+                document.getElementById('reportCommunionFilterAdmin')?.addEventListener('input', applyFilters);
+                document.getElementById('reportClassFilterAdmin')?.addEventListener('input', applyFilters);
+                document.getElementById('clearReportFiltersAdmin')?.addEventListener('click', () => {
+                    document.getElementById('reportNameFilterAdmin').value = '';
+                    document.getElementById('reportMassFilterAdmin').value = '0';
+                    document.getElementById('reportCommunionFilterAdmin').value = '0';
+                    document.getElementById('reportClassFilterAdmin').value = '0';
                     applyFilters();
                 });
-                document.getElementById('massFilterAdmin').addEventListener('input', (e) => {
-                    massFilter = parseInt(e.target.value) || 0;
-                    applyFilters();
-                });
-                document.getElementById('communionFilterAdmin').addEventListener('input', (e) => {
-                    communionFilter = parseInt(e.target.value) || 0;
-                    applyFilters();
-                });
-                document.getElementById('classFilterAdmin').addEventListener('input', (e) => {
-                    classFilter = parseInt(e.target.value) || 0;
-                    applyFilters();
-                });
-                document.getElementById('clearFiltersAdmin').addEventListener('click', () => {
-                    document.getElementById('nameFilterAdmin').value = '';
-                    document.getElementById('massFilterAdmin').value = '0';
-                    document.getElementById('communionFilterAdmin').value = '0';
-                    document.getElementById('classFilterAdmin').value = '0';
-                    nameFilter = '';
-                    massFilter = 0;
-                    communionFilter = 0;
-                    classFilter = 0;
-                    applyFilters();
-                });
+
                 document.getElementById('backToDailyAdminBtn').addEventListener('click', async () => {
                     viewMode = 'daily';
                     await renderDailyAdminView(classId);
