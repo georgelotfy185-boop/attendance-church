@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>خدمة خمسة وستة - مدارس الأحد</title>
+    <title>خدمة خامسة وسادسة - مدارس الأحد</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <style>
@@ -745,7 +745,7 @@
                 <div style="font-family: 'Segoe UI', sans-serif; direction: rtl; padding: 20px;">
                     <div style="text-align: center; margin-bottom: 20px;">
                         <img src="${LOGO_URL}" style="height: 80px;" alt="شعار الخدمة">
-                        <h2 style="color: #1e3a8a; margin: 10px 0;">خدمة خمسة وستة</h2>
+                        <h2 style="color: #1e3a8a; margin: 10px 0;">خدمة خامسة وسادسة</h2>
                         <h3>كوبون تميز</h3>
                     </div>
                     <div style="border: 2px dashed #1e3a8a; padding: 20px; border-radius: 20px;">
@@ -879,7 +879,7 @@
                     <div class="header" style="justify-content: center; border-bottom: none;">
                         <div class="logo-container">
                             <img src="${LOGO_URL}" alt="شعار الخدمة" class="logo-img">
-                            <span class="logo-text">خدمة خمسة وستة</span>
+                            <span class="logo-text">خدمة خامسة وسادسة</span>
                         </div>
                     </div>
                     <div class="login-form">
@@ -925,7 +925,7 @@
                     <div class="header">
                         <div class="logo-container">
                             <img src="${LOGO_URL}" alt="شعار الخدمة" class="logo-img">
-                            <span class="logo-text">خدمة خمسة وستة</span>
+                            <span class="logo-text">خدمة خامسة وسادسة</span>
                         </div>
                         <div>
                             <button class="btn btn-info" id="allClassesReportBtn">📋 تقرير شامل</button>
@@ -966,12 +966,13 @@
         // ========== دوال التسجيل اليومي مع فلاتر ==========
         function renderDailyView() {
             const today = getTodayDate();
-            attendanceRecords = [];
+            attendanceRecords = []; // نجعلها فارغة
             renderDailyTable(today);
         }
 
         function renderDailyTable(selectedDate) {
             const originalStudents = students;
+            let currentFilter = '';
             let filteredStudents = originalStudents;
 
             function applyFilter() {
@@ -1069,7 +1070,11 @@
                 updateDashboard(attendanceRecords);
                 attachInputListeners();
 
-                document.getElementById('dailyNameFilter')?.addEventListener('input', applyFilter);
+                const filterInput = document.getElementById('dailyNameFilter');
+                if (filterInput) {
+                    filterInput.addEventListener('input', applyFilter);
+                }
+
                 document.getElementById('logoutBtn').addEventListener('click', logout);
                 document.getElementById('reportBtn').addEventListener('click', async () => {
                     viewMode = 'report';
@@ -1097,6 +1102,7 @@
 
         function renderDailyTableAdmin(classId, selectedDate) {
             const originalStudents = students;
+            let currentFilter = '';
             let filteredStudents = originalStudents;
 
             function applyFilter() {
@@ -1193,7 +1199,11 @@
                 updateDashboard(attendanceRecords);
                 attachInputListeners();
 
-                document.getElementById('dailyNameFilterAdmin')?.addEventListener('input', applyFilter);
+                const filterInput = document.getElementById('dailyNameFilterAdmin');
+                if (filterInput) {
+                    filterInput.addEventListener('input', applyFilter);
+                }
+
                 document.getElementById('reportAdminBtn').addEventListener('click', async () => {
                     viewMode = 'report';
                     const endDate = getTodayDate();
@@ -1593,7 +1603,7 @@
                             </div>
                             <div>
                                 <label for="reportMassFilterAdmin">القداس ≥:</label>
-                                <input type="number" id="reportMassFilterAdmin" min="0" max="100" value="0" style="width: 70px; padding: 8px; border-radius: 8px; border: 1px solid #d1d5db;">
+                                <input type="number" id="reportMassFilterAdmin" min="0" max="100" value="0" style="width: 70px; padding: 8px; border-radius: 8px;">
                             </div>
                             <div>
                                 <label for="reportCommunionFilterAdmin">التناول ≥:</label>
