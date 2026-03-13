@@ -916,7 +916,7 @@
                 .eq('active', true);
             students = stds || [];
             viewMode = 'daily';
-            renderDailyView();
+            await renderDailyView();
         }
 
         async function loadAdminView() {
@@ -961,17 +961,17 @@
                     const { data: stds } = await supabaseClient.from('students').select('*').eq('class_id', classId).eq('active', true);
                     students = stds || [];
                     viewMode = 'daily';
-                    renderDailyAdminView(classId);
+                    await renderDailyAdminView(classId);
                 } else {
                     document.getElementById('adminContent').innerHTML = '';
                 }
             });
         }
 
-        // ========== دوال التسجيل اليومي ==========
-        function renderDailyView() {
+        // ========== دوال التسجيل اليومي (معدلة لجلب البيانات القديمة) ==========
+        async function renderDailyView() {
             const today = getTodayDate();
-            attendanceRecords = [];
+            attendanceRecords = await fetchAttendanceForDate(currentClassId, today);
             renderDailyTable(today);
         }
 
@@ -1092,7 +1092,7 @@
 
         async function renderDailyAdminView(classId) {
             const today = getTodayDate();
-            attendanceRecords = [];
+            attendanceRecords = await fetchAttendanceForDate(classId, today);
             renderDailyTableAdmin(classId, today);
         }
 
@@ -1209,7 +1209,7 @@
             });
         }
 
-        // ========== دوال التقارير ==========
+        // ========== دوال التقارير (بدون تغيير) ==========
         function renderReportTable(startDate, endDate) {
             const summaryData = students.map(s => {
                 const studentRecords = attendanceRecords.filter(r => r.student_id === s.id);
@@ -1318,7 +1318,6 @@
 
             updateDashboard(attendanceRecords);
 
-            // دالة الفلتر العامة للتقرير
             window.filterReportTable = function() {
                 const nameFilter = normalizeText(document.getElementById('reportNameFilter')?.value || '');
                 const massFilter = parseInt(document.getElementById('reportMassFilter')?.value) || 0;
@@ -1362,7 +1361,7 @@
 
             document.getElementById('backToDailyBtn').addEventListener('click', async () => {
                 viewMode = 'daily';
-                renderDailyView();
+                await renderDailyView();
             });
             document.getElementById('logoutBtn').addEventListener('click', logout);
             document.getElementById('toggleReportMode').addEventListener('click', () => {
@@ -1502,7 +1501,6 @@
             });
         }
 
-        // ========== دوال التقارير للأدمن (مماثلة) ==========
         async function renderReportTableAdmin(classId, startDate, endDate) {
             const summaryData = students.map(s => {
                 const studentRecords = attendanceRecords.filter(r => r.student_id === s.id);
