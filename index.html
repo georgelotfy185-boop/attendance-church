@@ -434,7 +434,6 @@
         .print-btn:hover {
             background: #2563eb;
         }
-        /* ضمان أن حقول الإدخال يمكن التفاعل معها */
         .filter-input, .filter-number {
             background: white !important;
             border: 1px solid #d1d5db !important;
@@ -1939,7 +1938,29 @@
             });
         }
 
+        // ========== دالة حفظ الحضور المعدلة مع التحذير ==========
         async function saveDailyAttendance(classId, date) {
+            // التحقق أولاً مما إذا كان اليوم مسجلاً بالفعل
+            const { data: existingRecords, error: fetchError } = await supabaseClient
+                .from('attendance')
+                .select('id')
+                .eq('date', date)
+                .in('student_id', students.map(s => s.id));
+
+            if (fetchError) {
+                console.error("خطأ في التحقق من السجلات الموجودة:", fetchError);
+            }
+
+            if (existingRecords && existingRecords.length > 0) {
+                // يوجد بالفعل سجلات لهذا اليوم، نعرض رسالة تأكيد
+                const userConfirmed = confirm(`⚠️ هذا اليوم (${date}) مسجل بالفعل.\nهل تريد تعديل البيانات؟`);
+                if (!userConfirmed) {
+                    // المستخدم ألغى العملية
+                    return;
+                }
+            }
+
+            // رسالة التأكيد الأصلية (يمكنك إزالتها إذا أردت الاكتفاء بالرسالة الجديدة)
             if (!confirm('هل أنت متأكد من حفظ البيانات؟')) {
                 return;
             }
