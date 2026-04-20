@@ -606,26 +606,38 @@
             return data || [];
         }
 
-        // دالة للتحقق من الغياب المتكرر (آخر جلستين)
+        // دالة للتحقق من الغياب المتكرر (آخر جلستين) - نسخة محسنة
         async function isRepeatedAbsence(studentId, currentDate) {
-            const { data: records, error } = await supabaseClient
-                .from('attendance')
-                .select('date, mass_grade, communion_grade, class_grade, behavior_grade')
-                .eq('student_id', studentId)
-                .lt('date', currentDate)
-                .order('date', { ascending: false })
-                .limit(2);
+            try {
+                const { data: records, error } = await supabaseClient
+                    .from('attendance')
+                    .select('date, mass_grade, communion_grade, class_grade, behavior_grade')
+                    .eq('student_id', studentId)
+                    .lt('date', currentDate)
+                    .order('date', { ascending: false })
+                    .limit(2);
 
-            if (error || !records || records.length < 2) {
+                if (error) {
+                    console.error(`خطأ في جلب سجلات الطالب ${studentId}:`, error);
+                    return false;
+                }
+
+                if (!records || records.length < 2) {
+                    // لا توجد سجلات كافية للتحقق (أقل من تاريخين)
+                    return false;
+                }
+
+                const isAbsent = (record) => {
+                    const total = (record.mass_grade || 0) + (record.communion_grade || 0) + (record.class_grade || 0) + (record.behavior_grade || 0);
+                    return total === 0;
+                };
+
+                const result = isAbsent(records[0]) && isAbsent(records[1]);
+                return result;
+            } catch (err) {
+                console.error(`خطأ غير متوقع للطالب ${studentId}:`, err);
                 return false;
             }
-
-            const isAbsent = (record) => {
-                const total = (record.mass_grade || 0) + (record.communion_grade || 0) + (record.class_grade || 0) + (record.behavior_grade || 0);
-                return total === 0;
-            };
-
-            return isAbsent(records[0]) && isAbsent(records[1]);
         }
 
         function calculateTotalFromRow(row) {
@@ -1211,7 +1223,7 @@
                     </div>
                     <div class="dashboard-summary"></div>
                     <div class="table-wrapper">
-                        <table>
+                        </table>
                             <thead>
                                 <tr>
                                     <th>الاسم</th>
@@ -1351,7 +1363,7 @@
                     </div>
                     <div class="dashboard-summary"></div>
                     <div class="table-wrapper">
-                        <table>
+                        <tr>
                             <thead>
                                 <tr>
                                     <th>الاسم</th>
@@ -1524,7 +1536,7 @@
                         <button class="btn" id="fetchRangeBtn">عرض</button>
                     </div>
                     <div class="table-wrapper">
-                        <tr>
+                        <table>
                             <thead>
                                 <tr>
                                     <th>الاسم</th>
@@ -1640,7 +1652,7 @@
                     </div>
                     <div class="dashboard-summary"></div>
                     <div class="table-wrapper">
-                        <table>
+                        <tr>
                             <thead>
                                 <tr>
                                     <th>الاسم</th>
@@ -1794,7 +1806,7 @@
                         <button class="btn" id="fetchRangeAdminBtn">عرض</button>
                     </div>
                     <div class="table-wrapper">
-                        <tr>
+                        <table>
                             <thead>
                                 <tr>
                                     <th>الاسم</th>
@@ -1916,7 +1928,7 @@
                                     </thead>
                                     <tbody>
                                         ${summaryData.map(s => `
-                                            <tr>
+                                            <td>
                                                 <td>${s.name}</td>
                                                 <td>${s.totalDays}</td>
                                                 <td>${s.totalMass}</td>
