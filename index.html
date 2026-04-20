@@ -606,6 +606,28 @@
             return data || [];
         }
 
+        // دالة للتحقق من الغياب المتكرر (آخر جلستين)
+        async function isRepeatedAbsence(studentId, currentDate) {
+            const { data: records, error } = await supabaseClient
+                .from('attendance')
+                .select('date, mass_grade, communion_grade, class_grade, behavior_grade')
+                .eq('student_id', studentId)
+                .lt('date', currentDate)
+                .order('date', { ascending: false })
+                .limit(2);
+
+            if (error || !records || records.length < 2) {
+                return false;
+            }
+
+            const isAbsent = (record) => {
+                const total = (record.mass_grade || 0) + (record.communion_grade || 0) + (record.class_grade || 0) + (record.behavior_grade || 0);
+                return total === 0;
+            };
+
+            return isAbsent(records[0]) && isAbsent(records[1]);
+        }
+
         function calculateTotalFromRow(row) {
             const mass = parseInt(row.querySelector('[data-field="mass"]')?.value) || 0;
             const communion = parseInt(row.querySelector('[data-field="communion"]')?.value) || 0;
@@ -619,17 +641,6 @@
             if (!totalCell) return;
             const total = calculateTotalFromRow(row);
             totalCell.textContent = total;
-
-            const nameCell = row.cells[0];
-            let warningSpan = nameCell.querySelector('.absent-warning');
-            if (total === 0) {
-                if (!warningSpan) {
-                    const studentName = nameCell.childNodes[0]?.nodeValue || '';
-                    nameCell.innerHTML = `${studentName} <span class="absent-warning">⚠️ غائب</span>`;
-                }
-            } else {
-                if (warningSpan) warningSpan.remove();
-            }
         }
 
         function updateDashboard(records, studentsList = students) {
@@ -968,7 +979,7 @@
             });
         }
 
-        // ========== دوال التسجيل اليومي (معدلة لجلب البيانات القديمة) ==========
+        // ========== دوال التسجيل اليومي مع إشعار الغياب المتكرر ==========
         async function renderDailyView() {
             const today = getTodayDate();
             attendanceRecords = await fetchAttendanceForDate(currentClassId, today);
@@ -981,7 +992,8 @@
             rows.forEach(row => {
                 const nameCell = row.cells[0];
                 if (nameCell) {
-                    const name = normalizeText(nameCell.textContent);
+                    const nameSpan = nameCell.querySelector('.student-name');
+                    const name = nameSpan ? normalizeText(nameSpan.textContent) : normalizeText(nameCell.textContent);
                     if (name.includes(filterValue)) {
                         row.style.display = '';
                     } else {
@@ -991,9 +1003,11 @@
             });
         }
 
-        function renderDailyTable(selectedDate) {
+        async function renderDailyTable(selectedDate) {
             let rows = '';
-            students.forEach(s => {
+            const studentsData = [];
+
+            for (const s of students) {
                 const record = attendanceRecords.find(r => r.student_id === s.id);
                 const mass = record ? record.mass_grade : 0;
                 const communion = record ? record.communion_grade : 0;
@@ -1001,11 +1015,16 @@
                 const behavior = record ? record.behavior_grade : 0;
                 const notes = record ? record.notes || '' : '';
                 const total = mass + communion + classGrade + behavior;
-                const warning = (total === 0) ? ' <span class="absent-warning">⚠️ غائب</span>' : '';
+
+                studentsData.push({
+                    id: s.id,
+                    name: s.name,
+                    mass, communion, classGrade, behavior, notes, total
+                });
 
                 rows += `
                     <tr>
-                        <td>${s.name}${warning}</td>
+                        <td><span class="student-name" data-id="${s.id}">${s.name}</span></td>
                         <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="mass" value="${mass}"></td>
                         <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="communion" value="${communion}"></td>
                         <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="class" value="${classGrade}"></td>
@@ -1023,7 +1042,7 @@
                         <td class="total-grade">${total}</td>
                     </tr>
                 `;
-            });
+            }
 
             app.innerHTML = `
                 <div>
@@ -1049,7 +1068,7 @@
                     </div>
                     <div class="dashboard-summary"></div>
                     <div class="table-wrapper">
-                        <table>
+                        <tr>
                             <thead>
                                 <tr>
                                     <th>الاسم</th>
@@ -1073,6 +1092,21 @@
 
             updateDashboard(attendanceRecords);
             attachInputListeners();
+
+            // بعد رسم الجدول، نتحقق من الغياب المتكرر ونضيف العلامات
+            for (const student of studentsData) {
+                const isRepeated = await isRepeatedAbsence(student.id, selectedDate);
+                const nameSpan = document.querySelector(`.student-name[data-id="${student.id}"]`);
+                if (nameSpan) {
+                    if (isRepeated && student.total === 0) {
+                        nameSpan.innerHTML = `${student.name} <span class="repeated-absence">⚠️ غائب مرتين متتاليتين</span>`;
+                    } else if (student.total === 0) {
+                        nameSpan.innerHTML = `${student.name} <span class="absent-warning">⚠️ غائب</span>`;
+                    } else {
+                        nameSpan.innerHTML = student.name;
+                    }
+                }
+            }
 
             document.getElementById('logoutBtn').addEventListener('click', logout);
             document.getElementById('reportBtn').addEventListener('click', async () => {
@@ -1102,7 +1136,8 @@
             rows.forEach(row => {
                 const nameCell = row.cells[0];
                 if (nameCell) {
-                    const name = normalizeText(nameCell.textContent);
+                    const nameSpan = nameCell.querySelector('.student-name');
+                    const name = nameSpan ? normalizeText(nameSpan.textContent) : normalizeText(nameCell.textContent);
                     if (name.includes(filterValue)) {
                         row.style.display = '';
                     } else {
@@ -1112,9 +1147,11 @@
             });
         }
 
-        function renderDailyTableAdmin(classId, selectedDate) {
+        async function renderDailyTableAdmin(classId, selectedDate) {
             let rows = '';
-            students.forEach(s => {
+            const studentsData = [];
+
+            for (const s of students) {
                 const record = attendanceRecords.find(r => r.student_id === s.id);
                 const mass = record ? record.mass_grade : 0;
                 const communion = record ? record.communion_grade : 0;
@@ -1122,11 +1159,16 @@
                 const behavior = record ? record.behavior_grade : 0;
                 const notes = record ? record.notes || '' : '';
                 const total = mass + communion + classGrade + behavior;
-                const warning = (total === 0) ? ' <span class="absent-warning">⚠️ غائب</span>' : '';
+
+                studentsData.push({
+                    id: s.id,
+                    name: s.name,
+                    mass, communion, classGrade, behavior, notes, total
+                });
 
                 rows += `
                     <tr>
-                        <td>${s.name}${warning}</td>
+                        <td><span class="student-name" data-id="${s.id}">${s.name}</span></td>
                         <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="mass" value="${mass}"></td>
                         <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="communion" value="${communion}"></td>
                         <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="class" value="${classGrade}"></td>
@@ -1144,7 +1186,7 @@
                         <td class="total-grade">${total}</td>
                     </tr>
                 `;
-            });
+            }
 
             document.getElementById('adminContent').innerHTML = `
                 <div>
@@ -1194,6 +1236,21 @@
             updateDashboard(attendanceRecords);
             attachInputListeners();
 
+            // بعد رسم الجدول، نتحقق من الغياب المتكرر
+            for (const student of studentsData) {
+                const isRepeated = await isRepeatedAbsence(student.id, selectedDate);
+                const nameSpan = document.querySelector(`.student-name[data-id="${student.id}"]`);
+                if (nameSpan) {
+                    if (isRepeated && student.total === 0) {
+                        nameSpan.innerHTML = `${student.name} <span class="repeated-absence">⚠️ غائب مرتين متتاليتين</span>`;
+                    } else if (student.total === 0) {
+                        nameSpan.innerHTML = `${student.name} <span class="absent-warning">⚠️ غائب</span>`;
+                    } else {
+                        nameSpan.innerHTML = student.name;
+                    }
+                }
+            }
+
             document.getElementById('reportAdminBtn').addEventListener('click', async () => {
                 viewMode = 'report';
                 const endDate = getTodayDate();
@@ -1209,7 +1266,7 @@
             });
         }
 
-        // ========== دوال التقارير (بدون تغيير) ==========
+        // ========== دوال التقارير (كما هي) ==========
         function renderReportTable(startDate, endDate) {
             const summaryData = students.map(s => {
                 const studentRecords = attendanceRecords.filter(r => r.student_id === s.id);
@@ -1537,7 +1594,7 @@
                         <td>
                             <button class="btn btn-coupon" onclick="showCoupon('${s.id}', '${startDate}', '${endDate}')">🎫 كوبون</button>
                         </td>
-                    </tr>
+                    <tr>
                 `;
             });
 
@@ -1583,7 +1640,7 @@
                     </div>
                     <div class="dashboard-summary"></div>
                     <div class="table-wrapper">
-                        <table>
+                        <tr>
                             <thead>
                                 <tr>
                                     <th>الاسم</th>
@@ -1950,15 +2007,12 @@
             }
 
             if (existingRecords && existingRecords.length > 0) {
-                // يوجد بالفعل سجلات لهذا اليوم، نعرض رسالة تأكيد
                 const userConfirmed = confirm(`⚠️ هذا اليوم (${date}) مسجل بالفعل.\nهل تريد تعديل البيانات؟`);
                 if (!userConfirmed) {
-                    // المستخدم ألغى العملية
                     return;
                 }
             }
 
-            // رسالة التأكيد الأصلية (يمكنك إزالتها إذا أردت الاكتفاء بالرسالة الجديدة)
             if (!confirm('هل أنت متأكد من حفظ البيانات؟')) {
                 return;
             }
