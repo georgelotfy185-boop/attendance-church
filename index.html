@@ -513,9 +513,20 @@
         let viewMode = 'daily';
 
         const LOGO_URL = 'https://i.ibb.co/4gP3wDDV/image.png';
+        // إزالة التكرارات من قائمة الطلاب (حسب الاسم + الفصل)
+function deduplicateStudents(studentList) {
+    const uniqueMap = new Map();
+    for (const student of studentList) {
+        const key = `${student.name}_${student.class_id}`;
+        if (!uniqueMap.has(key)) {
+            uniqueMap.set(key, student);
+        }
+    }
+    return Array.from(uniqueMap.values());
+}
 
         // ------------------- دالة لإزالة التكرارات من قائمة الطلاب -------------------
-        function deduplicateStudents(studentList) {
+        students = deduplicateStudents(stds || []); {
             const uniqueMap = new Map();
             for (const student of studentList) {
                 const key = `${student.name}_${student.class_id}`;
@@ -944,11 +955,11 @@
 
         async function loadServantView() {
             const { data: stds, error } = await supabaseClient
-                .from('students')
-                .select('*')
-                .eq('class_id', currentClassId)
-                .eq('active', true);
-            students = deduplicateStudents(stds || []);
+    .from('students')
+    .select('*')
+    .eq('class_id', classId)
+    .eq('active', true);
+students = deduplicateStudents(stds || []);
             viewMode = 'daily';
             await renderDailyView();
         }
