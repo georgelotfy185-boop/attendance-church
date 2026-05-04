@@ -514,6 +514,18 @@
 
         const LOGO_URL = 'https://i.ibb.co/4gP3wDDV/image.png';
 
+        // ------------------- دالة لإزالة التكرارات من قائمة الطلاب -------------------
+        function deduplicateStudents(studentList) {
+            const uniqueMap = new Map();
+            for (const student of studentList) {
+                const key = `${student.name}_${student.class_id}`;
+                if (!uniqueMap.has(key)) {
+                    uniqueMap.set(key, student);
+                }
+            }
+            return Array.from(uniqueMap.values());
+        }
+
         // دالة لتطبيع النص (إزالة التشكيل) لتحسين البحث
         function normalizeText(text) {
             if (!text) return '';
@@ -557,7 +569,7 @@
                 console.error('Error fetching all students:', error);
                 return [];
             }
-            return data || [];
+            return deduplicateStudents(data || []);
         }
 
         async function fetchAttendanceForAllClasses(startDate, endDate) {
@@ -623,7 +635,6 @@
                 }
 
                 if (!records || records.length < 2) {
-                    // لا توجد سجلات كافية للتحقق (أقل من تاريخين)
                     return false;
                 }
 
@@ -937,7 +948,7 @@
                 .select('*')
                 .eq('class_id', currentClassId)
                 .eq('active', true);
-            students = stds || [];
+            students = deduplicateStudents(stds || []);
             viewMode = 'daily';
             await renderDailyView();
         }
@@ -982,7 +993,7 @@
                 const classId = e.target.value;
                 if (classId) {
                     const { data: stds } = await supabaseClient.from('students').select('*').eq('class_id', classId).eq('active', true);
-                    students = stds || [];
+                    students = deduplicateStudents(stds || []);
                     viewMode = 'daily';
                     await renderDailyAdminView(classId);
                 } else {
@@ -1080,7 +1091,7 @@
                     </div>
                     <div class="dashboard-summary"></div>
                     <div class="table-wrapper">
-                        <table>
+                        <tr>
                             <thead>
                                 <tr>
                                     <th>الاسم</th>
@@ -1223,7 +1234,7 @@
                     </div>
                     <div class="dashboard-summary"></div>
                     <div class="table-wrapper">
-                        </table>
+                        <table>
                             <thead>
                                 <tr>
                                     <th>الاسم</th>
@@ -1363,7 +1374,7 @@
                     </div>
                     <div class="dashboard-summary"></div>
                     <div class="table-wrapper">
-                        <tr>
+                        <table>
                             <thead>
                                 <tr>
                                     <th>الاسم</th>
@@ -1652,7 +1663,7 @@
                     </div>
                     <div class="dashboard-summary"></div>
                     <div class="table-wrapper">
-                        <tr>
+                        <table>
                             <thead>
                                 <tr>
                                     <th>الاسم</th>
@@ -1781,7 +1792,7 @@
                         <td>${rec.communion_grade}</td>
                         <td>${rec.class_grade}</td>
                         <td>${rec.behavior_grade}</td>
-                        <td>${rec.notes || ''}</td>
+                        <td>${rec.notes || ''}<td>
                         <td class="total-grade">${total}</td>
                     </tr>
                 `;
@@ -1806,7 +1817,7 @@
                         <button class="btn" id="fetchRangeAdminBtn">عرض</button>
                     </div>
                     <div class="table-wrapper">
-                        <table>
+                        <tr>
                             <thead>
                                 <tr>
                                     <th>الاسم</th>
@@ -1928,7 +1939,7 @@
                                     </thead>
                                     <tbody>
                                         ${summaryData.map(s => `
-                                            <td>
+                                            <tr>
                                                 <td>${s.name}</td>
                                                 <td>${s.totalDays}</td>
                                                 <td>${s.totalMass}</td>
