@@ -122,6 +122,9 @@
         .btn-coupon:hover:not(:disabled) {
             background: #7c3aed;
         }
+        .btn-add {
+            background: #10b981;
+        }
         .spinner {
             display: inline-block;
             width: 16px;
@@ -157,10 +160,6 @@
             border: 1px solid #d1d5db;
             border-radius: 16px;
             font-size: 18px;
-        }
-        .login-form input:focus {
-            border-color: #1e3a8a;
-            outline: none;
         }
         .date-bar, .date-range {
             display: flex;
@@ -222,78 +221,65 @@
             border: 1px solid #e5e7eb;
             background: white;
         }
-        table {
+        .attendance-table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 900px;
+            table-layout: fixed;
+            min-width: 800px;
         }
-        th {
+        .attendance-table th,
+        .attendance-table td {
+            border: 1px solid #e5e7eb;
+            padding: 12px;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .attendance-table th {
             background: #1e3a8a;
             color: white;
             font-weight: 600;
-            padding: 16px 12px;
-            font-size: 16px;
+            font-size: 15px;
         }
-        td {
-            border: 1px solid #e5e7eb;
-            padding: 15px;
+        .attendance-table input,
+        .attendance-table select {
+            width: 100%;
+            padding: 8px;
             text-align: center;
-            background: white;
-            font-size: 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
         }
-        td:first-child {
+        .attendance-table td:first-child {
             text-align: right;
-            padding-right: 20px;
-            font-weight: 500;
+            padding-right: 10px;
         }
-        .grade-input {
-            width: 80px;
-            padding: 12px;
-            text-align: center;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 16px;
-        }
-        .grade-input:out-of-range {
-            border: 2px solid red;
-        }
-        .behavior-select {
-            width: 80px;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #d1d5db;
-            background: white;
-            font-size: 16px;
-        }
-        .total-grade {
-            font-weight: 700;
-            color: #1e3a8a;
-            background: #e0f2fe;
-            border-radius: 8px;
-            padding: 8px 0;
-            min-width: 60px;
-            display: inline-block;
-            font-size: 16px;
+        .name-cell {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            flex-wrap: wrap;
         }
         .absent-warning {
             background-color: #fee2e2;
             color: #b91c1c;
             font-weight: 600;
             border-radius: 20px;
-            padding: 6px 10px;
-            font-size: 14px;
+            padding: 4px 8px;
+            font-size: 13px;
             display: inline-block;
-            margin-left: 5px;
+            white-space: nowrap;
         }
         .repeated-absence {
             background-color: #fef3c7;
             color: #92400e;
             font-weight: 600;
             border-radius: 20px;
-            padding: 6px 10px;
-            font-size: 14px;
+            padding: 4px 8px;
+            font-size: 13px;
             display: inline-block;
-            margin-left: 5px;
+            white-space: nowrap;
         }
         .save-btn {
             background: #10b981;
@@ -333,6 +319,38 @@
             background: #fee2e2;
             color: #991b1b;
         }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 24px;
+            max-width: 500px;
+            width: 90%;
+            direction: rtl;
+        }
+        .modal-content h3 {
+            margin-bottom: 20px;
+            color: #1e3a8a;
+        }
+        .modal-content input, .modal-content select {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            font-size: 16px;
+        }
         .coupon-modal {
             display: none;
             position: fixed;
@@ -366,59 +384,6 @@
         }
         .coupon-close:hover {
             color: #1e3a8a;
-        }
-        .coupon-header {
-            text-align: center;
-            margin-bottom: 20px;
-            border-bottom: 2px dashed #1e3a8a;
-            padding-bottom: 15px;
-        }
-        .coupon-header img {
-            height: 60px;
-            margin-bottom: 10px;
-        }
-        .coupon-header h3 {
-            color: #1e3a8a;
-            font-size: 24px;
-        }
-        .coupon-body {
-            margin-bottom: 20px;
-        }
-        .coupon-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        .coupon-row:last-child {
-            border-bottom: none;
-        }
-        .coupon-label {
-            font-weight: 600;
-            color: #374151;
-        }
-        .coupon-value {
-            font-weight: 700;
-            color: #1e3a8a;
-            font-size: 18px;
-        }
-        .coupon-total {
-            background: #e0f2fe;
-            border-radius: 12px;
-            padding: 15px;
-            text-align: center;
-            margin-top: 15px;
-        }
-        .coupon-total .value {
-            font-size: 36px;
-            font-weight: 700;
-            color: #1e3a8a;
-        }
-        .coupon-footer {
-            text-align: center;
-            margin-top: 20px;
-            color: #6b7280;
-            font-size: 14px;
         }
         .print-btn {
             background: #1e3a8a;
@@ -460,33 +425,49 @@
                 flex-direction: column;
                 align-items: stretch;
             }
-            .grade-input, .behavior-select {
-                width: 100%;
-                max-width: 100px;
+            .attendance-table th,
+            .attendance-table td {
+                padding: 8px;
             }
-            td {
-                padding: 10px;
+            .attendance-table input,
+            .attendance-table select {
+                padding: 6px;
+                font-size: 12px;
             }
         }
         @media (max-width: 400px) {
-            .grade-input, .behavior-select {
-                width: 100%;
-                max-width: 70px;
-                padding: 10px;
+            .attendance-table th,
+            .attendance-table td {
+                padding: 6px;
             }
-            td:first-child {
-                padding-right: 10px;
-                font-size: 14px;
-            }
-            .btn, .save-btn {
-                font-size: 16px;
-                padding: 14px;
+            .attendance-table input,
+            .attendance-table select {
+                padding: 4px;
+                font-size: 11px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container" id="app"></div>
+
+    <!-- نافذة إضافة طالب -->
+    <div id="addStudentModal" class="modal">
+        <div class="modal-content">
+            <h3>➕ إضافة طالب جديد</h3>
+            <label for="newStudentName">اسم الطالب:</label>
+            <input type="text" id="newStudentName" placeholder="أدخل الاسم كاملاً">
+            <div id="adminClassSelectDiv" style="display: none;">
+                <label for="newStudentClass">الفصل:</label>
+                <select id="newStudentClass"></select>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: space-between;">
+                <button class="btn" id="confirmAddStudent">حفظ</button>
+                <button class="btn btn-warning" id="cancelAddStudent">إلغاء</button>
+            </div>
+            <div id="addStudentMessage" style="margin-top: 10px; color: red;"></div>
+        </div>
+    </div>
 
     <!-- نافذة الكوبون المنبثقة -->
     <div id="couponModal" class="coupon-modal">
@@ -511,10 +492,11 @@
         let allClasses = [];
         let isLoading = false;
         let viewMode = 'daily';
+        let currentAdminClassId = null;
 
         const LOGO_URL = 'https://i.ibb.co/4gP3wDDV/image.png';
 
-        // ------------------- دالة لإزالة التكرارات من قائمة الطلاب -------------------
+        // دالة لإزالة التكرارات من قائمة الطلاب (حسب الاسم + الفصل)
         function deduplicateStudents(studentList) {
             const uniqueMap = new Map();
             for (const student of studentList) {
@@ -526,7 +508,6 @@
             return Array.from(uniqueMap.values());
         }
 
-        // دالة لتطبيع النص (إزالة التشكيل) لتحسين البحث
         function normalizeText(text) {
             if (!text) return '';
             return text.toLowerCase()
@@ -618,7 +599,7 @@
             return data || [];
         }
 
-        // دالة للتحقق من الغياب المتكرر (آخر جلستين) - نسخة محسنة
+        // دالة للتحقق من الغياب المتكرر (آخر جلستين)
         async function isRepeatedAbsence(studentId, currentDate) {
             try {
                 const { data: records, error } = await supabaseClient
@@ -629,12 +610,7 @@
                     .order('date', { ascending: false })
                     .limit(2);
 
-                if (error) {
-                    console.error(`خطأ في جلب سجلات الطالب ${studentId}:`, error);
-                    return false;
-                }
-
-                if (!records || records.length < 2) {
+                if (error || !records || records.length < 2) {
                     return false;
                 }
 
@@ -643,10 +619,9 @@
                     return total === 0;
                 };
 
-                const result = isAbsent(records[0]) && isAbsent(records[1]);
-                return result;
+                return isAbsent(records[0]) && isAbsent(records[1]);
             } catch (err) {
-                console.error(`خطأ غير متوقع للطالب ${studentId}:`, err);
+                console.error(err);
                 return false;
             }
         }
@@ -886,123 +861,102 @@
             XLSX.writeFile(wb, `كوبونات_${className}_${new Date().toLocaleDateString()}.xlsx`);
         }
 
-        async function init() {
-            const { data: { session }, error } = await supabaseClient.auth.getSession();
-            if (session?.user) {
-                const { data: userData, error: userError } = await supabaseClient
-                    .from('users')
-                    .select('*, classes(id, class_name)')
-                    .eq('id', session.user.id)
-                    .single();
+        // ------------------- دوال إضافة طالب -------------------
+        async function checkDuplicateStudent(name, classId) {
+            const { data, error } = await supabaseClient
+                .from('students')
+                .select('id')
+                .eq('name', name)
+                .eq('class_id', classId)
+                .maybeSingle();
+            if (error) {
+                console.error('Error checking duplicate:', error);
+                return false;
+            }
+            return !!data;
+        }
 
-                if (userData) {
-                    currentUser = userData;
-                    currentClassId = userData.class_id;
-                    if (userData.role === 'admin') {
-                        allClasses = await fetchAllClasses();
-                        loadAdminView();
-                    } else {
-                        loadServantView();
-                    }
-                } else {
-                    renderLogin();
+        async function addStudent(name, classId) {
+            const duplicate = await checkDuplicateStudent(name, classId);
+            if (duplicate) {
+                alert('⚠️ هذا الاسم موجود بالفعل في نفس الفصل. لا يمكن إضافة مكرر.');
+                return false;
+            }
+            const { data, error } = await supabaseClient
+                .from('students')
+                .insert([{ name, class_id: classId, active: true }])
+                .select();
+            if (error) {
+                alert('حدث خطأ أثناء إضافة الطالب: ' + error.message);
+                console.error(error);
+                return false;
+            }
+            return true;
+        }
+
+        function showAddStudentModal(forAdmin = false) {
+            const modal = document.getElementById('addStudentModal');
+            const adminDiv = document.getElementById('adminClassSelectDiv');
+            if (forAdmin && allClasses.length) {
+                adminDiv.style.display = 'block';
+                const select = document.getElementById('newStudentClass');
+                select.innerHTML = '<option value="">اختر الفصل</option>';
+                allClasses.forEach(cls => {
+                    select.innerHTML += `<option value="${cls.id}">${cls.class_name}</option>`;
+                });
+            } else {
+                adminDiv.style.display = 'none';
+            }
+            modal.style.display = 'flex';
+        }
+
+        function hideAddStudentModal() {
+            document.getElementById('addStudentModal').style.display = 'none';
+            document.getElementById('newStudentName').value = '';
+            document.getElementById('addStudentMessage').innerHTML = '';
+        }
+
+        async function handleAddStudent() {
+            const nameInput = document.getElementById('newStudentName');
+            const name = nameInput.value.trim();
+            if (!name) {
+                document.getElementById('addStudentMessage').innerHTML = '⚠️ الرجاء إدخال اسم الطالب';
+                return;
+            }
+            let classId;
+            if (currentUser.role === 'admin') {
+                const select = document.getElementById('newStudentClass');
+                classId = select.value;
+                if (!classId) {
+                    document.getElementById('addStudentMessage').innerHTML = '⚠️ الرجاء اختيار الفصل';
+                    return;
                 }
             } else {
-                renderLogin();
+                classId = currentClassId;
+            }
+            const success = await addStudent(name, classId);
+            if (success) {
+                hideAddStudentModal();
+                // إعادة تحميل الجدول
+                if (currentUser.role === 'admin' && currentAdminClassId) {
+                    const { data: stds } = await supabaseClient.from('students').select('*').eq('class_id', currentAdminClassId).eq('active', true);
+                    students = deduplicateStudents(stds || []);
+                    const today = getTodayDate();
+                    attendanceRecords = await fetchAttendanceForDate(currentAdminClassId, today);
+                    renderDailyTableAdmin(currentAdminClassId, today);
+                } else if (currentUser.role !== 'admin') {
+                    const { data: stds } = await supabaseClient.from('students').select('*').eq('class_id', currentClassId).eq('active', true);
+                    students = deduplicateStudents(stds || []);
+                    const today = getTodayDate();
+                    attendanceRecords = await fetchAttendanceForDate(currentClassId, today);
+                    renderDailyTable(today);
+                } else {
+                    loadAdminView();
+                }
             }
         }
 
-        function renderLogin() {
-            app.innerHTML = `
-                <div>
-                    <div class="header" style="justify-content: center; border-bottom: none;">
-                        <div class="logo-container">
-                            <img src="${LOGO_URL}" alt="شعار الخدمة" class="logo-img">
-                            <span class="logo-text">خدمة خامسة وسادسة</span>
-                        </div>
-                    </div>
-                    <div class="login-form">
-                        <h2>تسجيل الدخول</h2>
-                        <input type="email" id="email" placeholder="البريد الإلكتروني" />
-                        <input type="password" id="password" placeholder="كلمة السر" />
-                        <button class="btn" id="loginBtn" style="width:100%;">دخول</button>
-                        <div id="loginMessage" style="margin-top:15px;"></div>
-                    </div>
-                </div>
-            `;
-            document.getElementById('loginBtn').addEventListener('click', async () => {
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
-                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-                if (error) {
-                    document.getElementById('loginMessage').innerHTML = `<div class="message error">${error.message}</div>`;
-                } else {
-                    init();
-                }
-            });
-        }
-
-        async function loadServantView() {
-            const { data: stds, error } = await supabaseClient
-                .from('students')
-                .select('*')
-                .eq('class_id', currentClassId)
-                .eq('active', true);
-            students = deduplicateStudents(stds || []);
-            viewMode = 'daily';
-            await renderDailyView();
-        }
-
-        async function loadAdminView() {
-            let options = '<option value="">اختر الفصل</option>';
-            allClasses.forEach(cls => {
-                options += `<option value="${cls.id}">${cls.class_name}</option>`;
-            });
-
-            app.innerHTML = `
-                <div>
-                    <div class="header">
-                        <div class="logo-container">
-                            <img src="${LOGO_URL}" alt="شعار الخدمة" class="logo-img">
-                            <span class="logo-text">خدمة خامسة وسادسة</span>
-                        </div>
-                        <div>
-                            <button class="btn btn-info" id="allClassesReportBtn">📋 تقرير شامل</button>
-                            <button class="btn" id="logoutBtn">تسجيل خروج</button>
-                        </div>
-                    </div>
-                    <div style="margin-bottom:20px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <label>اختر الفصل: </label>
-                        <select id="classSelect" style="padding:8px; border-radius:12px; flex:1; min-width:200px;">${options}</select>
-                    </div>
-                    <div id="adminContent"></div>
-                </div>
-            `;
-
-            document.getElementById('logoutBtn').addEventListener('click', logout);
-            document.getElementById('allClassesReportBtn').addEventListener('click', async () => {
-                viewMode = 'allClasses';
-                const endDate = getTodayDate();
-                const startDate = getThreeWeeksAgo();
-                attendanceRecords = await fetchAttendanceForAllClasses(startDate, endDate);
-                const allStudents = await fetchAllStudents();
-                renderAllClassesReport(allStudents, attendanceRecords, startDate, endDate);
-            });
-
-            document.getElementById('classSelect').addEventListener('change', async (e) => {
-                const classId = e.target.value;
-                if (classId) {
-                    const { data: stds } = await supabaseClient.from('students').select('*').eq('class_id', classId).eq('active', true);
-                    students = deduplicateStudents(stds || []);
-                    viewMode = 'daily';
-                    await renderDailyAdminView(classId);
-                } else {
-                    document.getElementById('adminContent').innerHTML = '';
-                }
-            });
-        }
-
-        // ========== دوال التسجيل اليومي مع إشعار الغياب المتكرر ==========
+        // ================== دوال التسجيل اليومي مع إشعار الغياب المتكرر وإضافة طالب ==================
         async function renderDailyView() {
             const today = getTodayDate();
             attendanceRecords = await fetchAttendanceForDate(currentClassId, today);
@@ -1016,7 +970,7 @@
                 const nameCell = row.cells[0];
                 if (nameCell) {
                     const nameSpan = nameCell.querySelector('.student-name');
-                    const name = nameSpan ? normalizeText(nameSpan.textContent) : normalizeText(nameCell.textContent);
+                    const name = nameSpan ? normalizeText(nameSpan.textContent) : normalizeText(nameCell.innerText);
                     if (name.includes(filterValue)) {
                         row.style.display = '';
                     } else {
@@ -1038,16 +992,11 @@
                 const behavior = record ? record.behavior_grade : 0;
                 const notes = record ? record.notes || '' : '';
                 const total = mass + communion + classGrade + behavior;
-
-                studentsData.push({
-                    id: s.id,
-                    name: s.name,
-                    mass, communion, classGrade, behavior, notes, total
-                });
+                studentsData.push({ id: s.id, name: s.name, total });
 
                 rows += `
-                    <tr>
-                        <td><span class="student-name" data-id="${s.id}">${s.name}</span></td>
+                    <tr data-id="${s.id}">
+                        <td><div class="name-cell"><span class="student-name" data-id="${s.id}">${s.name}</span></div></td>
                         <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="mass" value="${mass}"></td>
                         <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="communion" value="${communion}"></td>
                         <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="class" value="${classGrade}"></td>
@@ -1067,7 +1016,7 @@
                 `;
             }
 
-            app.innerHTML = `
+            document.getElementById('app').innerHTML = `
                 <div>
                     <div class="header">
                         <div class="logo-container">
@@ -1075,6 +1024,7 @@
                             <span class="logo-text">${currentUser?.classes?.class_name || 'الفصل'}</span>
                         </div>
                         <div>
+                            <button class="btn btn-add" id="addStudentBtn">➕ إضافة طالب</button>
                             <button class="btn btn-warning" id="reportBtn">📊 التقارير</button>
                             <button class="btn" id="logoutBtn">تسجيل خروج</button>
                         </div>
@@ -1091,7 +1041,7 @@
                     </div>
                     <div class="dashboard-summary"></div>
                     <div class="table-wrapper">
-                        <tr>
+                        <table class="attendance-table">
                             <thead>
                                 <tr>
                                     <th>الاسم</th>
@@ -1121,16 +1071,28 @@
                 const isRepeated = await isRepeatedAbsence(student.id, selectedDate);
                 const nameSpan = document.querySelector(`.student-name[data-id="${student.id}"]`);
                 if (nameSpan) {
+                    // إزالة أي علامات سابقة
+                    const parentDiv = nameSpan.parentElement;
+                    let existingWarning = parentDiv.querySelector('.absent-warning');
+                    let existingRepeated = parentDiv.querySelector('.repeated-absence');
+                    if (existingWarning) existingWarning.remove();
+                    if (existingRepeated) existingRepeated.remove();
+
                     if (isRepeated && student.total === 0) {
-                        nameSpan.innerHTML = `${student.name} <span class="repeated-absence">⚠️ غائب مرتين متتاليتين</span>`;
+                        const warningSpan = document.createElement('span');
+                        warningSpan.className = 'repeated-absence';
+                        warningSpan.innerText = '⚠️ غائب مرتين متتاليتين';
+                        parentDiv.appendChild(warningSpan);
                     } else if (student.total === 0) {
-                        nameSpan.innerHTML = `${student.name} <span class="absent-warning">⚠️ غائب</span>`;
-                    } else {
-                        nameSpan.innerHTML = student.name;
+                        const warningSpan = document.createElement('span');
+                        warningSpan.className = 'absent-warning';
+                        warningSpan.innerText = '⚠️ غائب';
+                        parentDiv.appendChild(warningSpan);
                     }
                 }
             }
 
+            document.getElementById('addStudentBtn').addEventListener('click', () => showAddStudentModal(false));
             document.getElementById('logoutBtn').addEventListener('click', logout);
             document.getElementById('reportBtn').addEventListener('click', async () => {
                 viewMode = 'report';
@@ -1160,7 +1122,7 @@
                 const nameCell = row.cells[0];
                 if (nameCell) {
                     const nameSpan = nameCell.querySelector('.student-name');
-                    const name = nameSpan ? normalizeText(nameSpan.textContent) : normalizeText(nameCell.textContent);
+                    const name = nameSpan ? normalizeText(nameSpan.textContent) : normalizeText(nameCell.innerText);
                     if (name.includes(filterValue)) {
                         row.style.display = '';
                     } else {
@@ -1182,16 +1144,11 @@
                 const behavior = record ? record.behavior_grade : 0;
                 const notes = record ? record.notes || '' : '';
                 const total = mass + communion + classGrade + behavior;
-
-                studentsData.push({
-                    id: s.id,
-                    name: s.name,
-                    mass, communion, classGrade, behavior, notes, total
-                });
+                studentsData.push({ id: s.id, name: s.name, total });
 
                 rows += `
-                    <tr>
-                        <td><span class="student-name" data-id="${s.id}">${s.name}</span></td>
+                    <tr data-id="${s.id}">
+                        <td><div class="name-cell"><span class="student-name" data-id="${s.id}">${s.name}</span></div></td>
                         <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="mass" value="${mass}"></td>
                         <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="communion" value="${communion}"></td>
                         <td><input type="number" min="0" max="10" step="10" class="grade-input" data-id="${s.id}" data-field="class" value="${classGrade}"></td>
@@ -1219,6 +1176,7 @@
                             <span class="logo-text">${students.length ? 'تسجيل يومي' : ''}</span>
                         </div>
                         <div>
+                            <button class="btn btn-add" id="addStudentAdminBtn">➕ إضافة طالب</button>
                             <button class="btn btn-warning" id="reportAdminBtn">📊 التقارير</button>
                         </div>
                     </div>
@@ -1234,7 +1192,7 @@
                     </div>
                     <div class="dashboard-summary"></div>
                     <div class="table-wrapper">
-                        <table>
+                        <table class="attendance-table">
                             <thead>
                                 <tr>
                                     <th>الاسم</th>
@@ -1264,16 +1222,27 @@
                 const isRepeated = await isRepeatedAbsence(student.id, selectedDate);
                 const nameSpan = document.querySelector(`.student-name[data-id="${student.id}"]`);
                 if (nameSpan) {
+                    const parentDiv = nameSpan.parentElement;
+                    let existingWarning = parentDiv.querySelector('.absent-warning');
+                    let existingRepeated = parentDiv.querySelector('.repeated-absence');
+                    if (existingWarning) existingWarning.remove();
+                    if (existingRepeated) existingRepeated.remove();
+
                     if (isRepeated && student.total === 0) {
-                        nameSpan.innerHTML = `${student.name} <span class="repeated-absence">⚠️ غائب مرتين متتاليتين</span>`;
+                        const warningSpan = document.createElement('span');
+                        warningSpan.className = 'repeated-absence';
+                        warningSpan.innerText = '⚠️ غائب مرتين متتاليتين';
+                        parentDiv.appendChild(warningSpan);
                     } else if (student.total === 0) {
-                        nameSpan.innerHTML = `${student.name} <span class="absent-warning">⚠️ غائب</span>`;
-                    } else {
-                        nameSpan.innerHTML = student.name;
+                        const warningSpan = document.createElement('span');
+                        warningSpan.className = 'absent-warning';
+                        warningSpan.innerText = '⚠️ غائب';
+                        parentDiv.appendChild(warningSpan);
                     }
                 }
             }
 
+            document.getElementById('addStudentAdminBtn').addEventListener('click', () => showAddStudentModal(true));
             document.getElementById('reportAdminBtn').addEventListener('click', async () => {
                 viewMode = 'report';
                 const endDate = getTodayDate();
@@ -1289,7 +1258,7 @@
             });
         }
 
-        // ========== دوال التقارير (كما هي) ==========
+        // ========== دوال التقارير ==========
         function renderReportTable(startDate, endDate) {
             const summaryData = students.map(s => {
                 const studentRecords = attendanceRecords.filter(r => r.student_id === s.id);
@@ -1312,188 +1281,181 @@
                 };
             });
 
-            let rows = '';
-            summaryData.forEach(s => {
-                rows += `
-                    <tr>
-                        <td>${s.name}</td>
-                        <td>${s.totalDays}</td>
-                        <td>${s.totalMass}</td>
-                        <td>${s.totalCommunion}</td>
-                        <td>${s.totalClass}</td>
-                        <td>${s.totalBehavior}</td>
-                        <td class="total-grade">${s.grandTotal}</td>
-                        <td>
-                            <button class="btn btn-coupon" onclick="showCoupon('${s.id}', '${startDate}', '${endDate}')">🎫 كوبون</button>
-                        </td>
-                    </tr>
+            let filteredData = [...summaryData];
+            let nameFilter = '';
+            let massFilter = 0;
+            let communionFilter = 0;
+            let classFilter = 0;
+
+            function applyFilters() {
+                nameFilter = document.getElementById('reportNameFilter')?.value?.toLowerCase() || '';
+                massFilter = parseInt(document.getElementById('reportMassFilter')?.value) || 0;
+                communionFilter = parseInt(document.getElementById('reportCommunionFilter')?.value) || 0;
+                classFilter = parseInt(document.getElementById('reportClassFilter')?.value) || 0;
+
+                filteredData = summaryData.filter(item => {
+                    const nameMatch = nameFilter === '' || item.name.toLowerCase().includes(nameFilter);
+                    const massMatch = item.totalMass >= massFilter;
+                    const communionMatch = item.totalCommunion >= communionFilter;
+                    const classMatch = item.totalClass >= classFilter;
+                    return nameMatch && massMatch && communionMatch && classMatch;
+                });
+                renderTable();
+            }
+
+            function renderTable() {
+                let rows = '';
+                filteredData.forEach(s => {
+                    rows += `
+                        <tr>
+                            <td>${s.name}</td>
+                            <td>${s.totalDays}</td>
+                            <td>${s.totalMass}</td>
+                            <td>${s.totalCommunion}</td>
+                            <td>${s.totalClass}</td>
+                            <td>${s.totalBehavior}</td>
+                            <td class="total-grade">${s.grandTotal}</td>
+                            <td>
+                                <button class="btn btn-coupon" onclick="showCoupon('${s.id}', '${startDate}', '${endDate}')">🎫 كوبون</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                document.getElementById('app').innerHTML = `
+                    <div>
+                        <div class="header">
+                            <div class="logo-container">
+                                <img src="${LOGO_URL}" alt="شعار الخدمة" class="logo-img">
+                                <span class="logo-text">${currentUser?.classes?.class_name || 'الفصل'} - تقرير موجز</span>
+                            </div>
+                            <div>
+                                <button class="btn" id="backToDailyBtn">🔙 العودة للتسجيل</button>
+                                <button class="btn btn-info" id="toggleReportMode">📊 عرض التفاصيل</button>
+                                <button class="btn btn-success" id="exportSummaryExcel">📥 تصدير Excel</button>
+                                <button class="btn btn-coupon" id="printAllCoupons">🖨️ طباعة كوبونات الفصل</button>
+                                <button class="btn btn-success" id="exportCouponsExcel">📥 تصدير الكوبونات Excel</button>
+                                <button class="btn" id="logoutBtn">تسجيل خروج</button>
+                            </div>
+                        </div>
+                        <div class="date-range">
+                            <label>من تاريخ:</label>
+                            <input type="date" id="startDate" value="${startDate}">
+                            <label>إلى تاريخ:</label>
+                            <input type="date" id="endDate" value="${endDate}">
+                            <button class="btn" id="fetchRangeBtn">عرض</button>
+                        </div>
+                        <div style="background: #f9fafb; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
+                            <div>
+                                <label>🔍 فلتر الاسم:</label>
+                                <input type="text" id="reportNameFilter" placeholder="اكتب جزءاً من الاسم" class="filter-input" style="width: 150px;" oninput="applyFilters()">
+                            </div>
+                            <div>
+                                <label>القداس ≥:</label>
+                                <input type="number" id="reportMassFilter" min="0" max="100" value="0" class="filter-number" oninput="applyFilters()">
+                            </div>
+                            <div>
+                                <label>التناول ≥:</label>
+                                <input type="number" id="reportCommunionFilter" min="0" max="100" value="0" class="filter-number" oninput="applyFilters()">
+                            </div>
+                            <div>
+                                <label>الخدمة ≥:</label>
+                                <input type="number" id="reportClassFilter" min="0" max="100" value="0" class="filter-number" oninput="applyFilters()">
+                            </div>
+                            <button class="btn" id="clearReportFilters">مسح الفلاتر</button>
+                        </div>
+                        <div class="dashboard-summary"></div>
+                        <div class="table-wrapper">
+                            <table class="attendance-table">
+                                <thead>
+                                    <tr>
+                                        <th>الاسم</th>
+                                        <th>عدد أيام الحضور</th>
+                                        <th>إجمالي القداس</th>
+                                        <th>إجمالي التناول</th>
+                                        <th>إجمالي الخدمة</th>
+                                        <th>إجمالي السلوك</th>
+                                        <th>المجموع الكلي</th>
+                                        <th>كوبون</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reportTableBody">
+                                    ${rows}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="message"></div>
+                    </div>
                 `;
-            });
 
-            app.innerHTML = `
-                <div>
-                    <div class="header">
-                        <div class="logo-container">
-                            <img src="${LOGO_URL}" alt="شعار الخدمة" class="logo-img">
-                            <span class="logo-text">${currentUser?.classes?.class_name || 'الفصل'} - تقرير موجز</span>
-                        </div>
-                        <div>
-                            <button class="btn" id="backToDailyBtn">🔙 العودة للتسجيل</button>
-                            <button class="btn btn-info" id="toggleReportMode">📊 عرض التفاصيل</button>
-                            <button class="btn btn-success" id="exportSummaryExcel">📥 تصدير Excel</button>
-                            <button class="btn btn-coupon" id="printAllCoupons">🖨️ طباعة كوبونات الفصل</button>
-                            <button class="btn btn-success" id="exportCouponsExcel">📥 تصدير الكوبونات Excel</button>
-                            <button class="btn" id="logoutBtn">تسجيل خروج</button>
-                        </div>
-                    </div>
-                    <div class="date-range">
-                        <label>من تاريخ:</label>
-                        <input type="date" id="startDate" value="${startDate}">
-                        <label>إلى تاريخ:</label>
-                        <input type="date" id="endDate" value="${endDate}">
-                        <button class="btn" id="fetchRangeBtn">عرض</button>
-                    </div>
-                    <div style="background: #f9fafb; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
-                        <div>
-                            <label for="reportNameFilter">🔍 فلتر الاسم:</label>
-                            <input type="text" id="reportNameFilter" placeholder="اكتب جزءاً من الاسم" class="filter-input" style="width: 150px;" oninput="filterReportTable()">
-                        </div>
-                        <div>
-                            <label for="reportMassFilter">القداس ≥:</label>
-                            <input type="number" id="reportMassFilter" min="0" max="100" value="0" class="filter-number" oninput="filterReportTable()">
-                        </div>
-                        <div>
-                            <label for="reportCommunionFilter">التناول ≥:</label>
-                            <input type="number" id="reportCommunionFilter" min="0" max="100" value="0" class="filter-number" oninput="filterReportTable()">
-                        </div>
-                        <div>
-                            <label for="reportClassFilter">الخدمة ≥:</label>
-                            <input type="number" id="reportClassFilter" min="0" max="100" value="0" class="filter-number" oninput="filterReportTable()">
-                        </div>
-                        <button class="btn" id="clearReportFilters">مسح الفلاتر</button>
-                    </div>
-                    <div class="dashboard-summary"></div>
-                    <div class="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>الاسم</th>
-                                    <th>عدد أيام الحضور</th>
-                                    <th>إجمالي القداس</th>
-                                    <th>إجمالي التناول</th>
-                                    <th>إجمالي الخدمة</th>
-                                    <th>إجمالي السلوك</th>
-                                    <th>المجموع الكلي</th>
-                                    <th>كوبون</th>
-                                </tr>
-                            </thead>
-                            <tbody id="reportTableBody">
-                                ${rows}
-                            </tbody>
-                        </table>
-                    </div>
-                    <div id="message"></div>
-                </div>
-            `;
+                updateDashboard(attendanceRecords);
 
-            updateDashboard(attendanceRecords);
+                document.getElementById('clearReportFilters').addEventListener('click', () => {
+                    document.getElementById('reportNameFilter').value = '';
+                    document.getElementById('reportMassFilter').value = '0';
+                    document.getElementById('reportCommunionFilter').value = '0';
+                    document.getElementById('reportClassFilter').value = '0';
+                    applyFilters();
+                });
 
-            window.filterReportTable = function() {
-                const nameFilter = normalizeText(document.getElementById('reportNameFilter')?.value || '');
-                const massFilter = parseInt(document.getElementById('reportMassFilter')?.value) || 0;
-                const communionFilter = parseInt(document.getElementById('reportCommunionFilter')?.value) || 0;
-                const classFilter = parseInt(document.getElementById('reportClassFilter')?.value) || 0;
-
-                const rows = document.querySelectorAll('#reportTableBody tr');
-                rows.forEach(row => {
-                    const nameCell = row.cells[0];
-                    const massCell = row.cells[2];
-                    const communionCell = row.cells[3];
-                    const classCell = row.cells[4];
-
-                    if (nameCell && massCell && communionCell && classCell) {
-                        const name = normalizeText(nameCell.textContent);
-                        const mass = parseInt(massCell.textContent) || 0;
-                        const communion = parseInt(communionCell.textContent) || 0;
-                        const classVal = parseInt(classCell.textContent) || 0;
-
-                        const nameMatch = nameFilter === '' || name.includes(nameFilter);
-                        const massMatch = mass >= massFilter;
-                        const communionMatch = communion >= communionFilter;
-                        const classMatch = classVal >= classFilter;
-
-                        if (nameMatch && massMatch && communionMatch && classMatch) {
-                            row.style.display = '';
-                        } else {
-                            row.style.display = 'none';
-                        }
+                document.getElementById('backToDailyBtn').addEventListener('click', async () => {
+                    viewMode = 'daily';
+                    await renderDailyView();
+                });
+                document.getElementById('logoutBtn').addEventListener('click', logout);
+                document.getElementById('toggleReportMode').addEventListener('click', () => {
+                    renderDetailedReport(startDate, endDate);
+                });
+                document.getElementById('exportSummaryExcel').addEventListener('click', () => {
+                    const dataForExport = filteredData.map(s => ({
+                        student_name: s.name,
+                        total_days: s.totalDays,
+                        total_mass: s.totalMass,
+                        total_communion: s.totalCommunion,
+                        total_class: s.totalClass,
+                        total_behavior: s.totalBehavior,
+                        grand_total: s.grandTotal
+                    }));
+                    const wsData = [['الاسم', 'عدد أيام الحضور', 'إجمالي القداس', 'إجمالي التناول', 'إجمالي الخدمة', 'إجمالي السلوك', 'المجموع الكلي']];
+                    dataForExport.forEach(s => {
+                        wsData.push([s.student_name, s.total_days, s.total_mass, s.total_communion, s.total_class, s.total_behavior, s.grand_total]);
+                    });
+                    const wb = XLSX.utils.book_new();
+                    const ws = XLSX.utils.aoa_to_sheet(wsData);
+                    XLSX.utils.book_append_sheet(wb, ws, 'تقرير موجز');
+                    XLSX.writeFile(wb, `تقرير_موجز_${currentUser?.classes?.class_name}_${new Date().toLocaleDateString()}.xlsx`);
+                });
+                document.getElementById('printAllCoupons').addEventListener('click', () => {
+                    const studentsWithGrades = filteredData.filter(s => s.grandTotal > 0);
+                    if (studentsWithGrades.length === 0) {
+                        alert('لا يوجد طلاب بمجموع أكبر من صفر لطباعة كوبوناتهم.');
+                        return;
                     }
+                    let couponsHTML = '';
+                    studentsWithGrades.forEach(s => {
+                        const studentRecords = attendanceRecords.filter(r => r.student_id === s.id);
+                        couponsHTML += generateCouponHTML(s.name, currentUser?.classes?.class_name || 'الفصل', startDate, endDate, studentRecords);
+                        couponsHTML += '<div style="page-break-after: always;"></div>';
+                    });
+                    printCoupon(couponsHTML);
                 });
-            };
+                document.getElementById('exportCouponsExcel').addEventListener('click', () => {
+                    const studentsWithGrades = filteredData.filter(s => s.grandTotal > 0);
+                    if (studentsWithGrades.length === 0) {
+                        alert('لا يوجد طلاب بمجموع أكبر من صفر لتصدير كوبوناتهم.');
+                        return;
+                    }
+                    exportCouponsToExcel(studentsWithGrades, currentUser?.classes?.class_name || 'الفصل', startDate, endDate);
+                });
+                document.getElementById('fetchRangeBtn').addEventListener('click', async () => {
+                    const newStart = document.getElementById('startDate').value;
+                    const newEnd = document.getElementById('endDate').value;
+                    attendanceRecords = await fetchAttendanceForDateRange(currentClassId, newStart, newEnd);
+                    renderReportTable(newStart, newEnd);
+                });
+            }
 
-            document.getElementById('clearReportFilters').addEventListener('click', () => {
-                document.getElementById('reportNameFilter').value = '';
-                document.getElementById('reportMassFilter').value = '0';
-                document.getElementById('reportCommunionFilter').value = '0';
-                document.getElementById('reportClassFilter').value = '0';
-                filterReportTable();
-            });
-
-            document.getElementById('backToDailyBtn').addEventListener('click', async () => {
-                viewMode = 'daily';
-                await renderDailyView();
-            });
-            document.getElementById('logoutBtn').addEventListener('click', logout);
-            document.getElementById('toggleReportMode').addEventListener('click', () => {
-                renderDetailedReport(startDate, endDate);
-            });
-            document.getElementById('exportSummaryExcel').addEventListener('click', () => {
-                const dataForExport = summaryData.map(s => ({
-                    student_name: s.name,
-                    total_days: s.totalDays,
-                    total_mass: s.totalMass,
-                    total_communion: s.totalCommunion,
-                    total_class: s.totalClass,
-                    total_behavior: s.totalBehavior,
-                    grand_total: s.grandTotal
-                }));
-                const wsData = [['الاسم', 'عدد أيام الحضور', 'إجمالي القداس', 'إجمالي التناول', 'إجمالي الخدمة', 'إجمالي السلوك', 'المجموع الكلي']];
-                dataForExport.forEach(s => {
-                    wsData.push([s.student_name, s.total_days, s.total_mass, s.total_communion, s.total_class, s.total_behavior, s.grand_total]);
-                });
-                const wb = XLSX.utils.book_new();
-                const ws = XLSX.utils.aoa_to_sheet(wsData);
-                XLSX.utils.book_append_sheet(wb, ws, 'تقرير موجز');
-                XLSX.writeFile(wb, `تقرير_موجز_${currentUser?.classes?.class_name}_${new Date().toLocaleDateString()}.xlsx`);
-            });
-            document.getElementById('printAllCoupons').addEventListener('click', () => {
-                const studentsWithGrades = summaryData.filter(s => s.grandTotal > 0);
-                if (studentsWithGrades.length === 0) {
-                    alert('لا يوجد طلاب بمجموع أكبر من صفر لطباعة كوبوناتهم.');
-                    return;
-                }
-                let couponsHTML = '';
-                studentsWithGrades.forEach(s => {
-                    const studentRecords = attendanceRecords.filter(r => r.student_id === s.id);
-                    couponsHTML += generateCouponHTML(s.name, currentUser?.classes?.class_name || 'الفصل', startDate, endDate, studentRecords);
-                    couponsHTML += '<div style="page-break-after: always;"></div>';
-                });
-                printCoupon(couponsHTML);
-            });
-            document.getElementById('exportCouponsExcel').addEventListener('click', () => {
-                const studentsWithGrades = summaryData.filter(s => s.grandTotal > 0);
-                if (studentsWithGrades.length === 0) {
-                    alert('لا يوجد طلاب بمجموع أكبر من صفر لتصدير كوبوناتهم.');
-                    return;
-                }
-                exportCouponsToExcel(studentsWithGrades, currentUser?.classes?.class_name || 'الفصل', startDate, endDate);
-            });
-            document.getElementById('fetchRangeBtn').addEventListener('click', async () => {
-                const newStart = document.getElementById('startDate').value;
-                const newEnd = document.getElementById('endDate').value;
-                attendanceRecords = await fetchAttendanceForDateRange(currentClassId, newStart, newEnd);
-                renderReportTable(newStart, newEnd);
-            });
+            renderTable();
 
             window.currentClassId = currentClassId;
             window.currentUser = currentUser;
@@ -1527,7 +1489,7 @@
                 `;
             });
 
-            app.innerHTML = `
+            document.getElementById('app').innerHTML = `
                 <div>
                     <div class="header">
                         <div class="logo-container">
@@ -1547,7 +1509,7 @@
                         <button class="btn" id="fetchRangeBtn">عرض</button>
                     </div>
                     <div class="table-wrapper">
-                        <table>
+                        <table class="attendance-table">
                             <thead>
                                 <tr>
                                     <th>الاسم</th>
@@ -1581,7 +1543,9 @@
             });
         }
 
+        // ========== دوال التقارير للأدمن (مماثلة) ==========
         async function renderReportTableAdmin(classId, startDate, endDate) {
+            // نفس هيكل دوال التقارير السابقة ولكن مع adminContent
             const summaryData = students.map(s => {
                 const studentRecords = attendanceRecords.filter(r => r.student_id === s.id);
                 const validRecords = studentRecords.filter(r => (r.mass_grade || 0) + (r.communion_grade || 0) + (r.class_grade || 0) > 0);
@@ -1603,168 +1567,161 @@
                 };
             });
 
-            let rows = '';
-            summaryData.forEach(s => {
-                rows += `
-                    <tr>
-                        <td>${s.name}</td>
-                        <td>${s.totalDays}</td>
-                        <td>${s.totalMass}</td>
-                        <td>${s.totalCommunion}</td>
-                        <td>${s.totalClass}</td>
-                        <td>${s.totalBehavior}</td>
-                        <td class="total-grade">${s.grandTotal}</td>
-                        <td>
-                            <button class="btn btn-coupon" onclick="showCoupon('${s.id}', '${startDate}', '${endDate}')">🎫 كوبون</button>
-                        </td>
-                    </tr>
+            let filteredData = [...summaryData];
+            let nameFilter = '';
+            let massFilter = 0;
+            let communionFilter = 0;
+            let classFilter = 0;
+
+            function applyFilters() {
+                nameFilter = document.getElementById('reportNameFilterAdmin')?.value?.toLowerCase() || '';
+                massFilter = parseInt(document.getElementById('reportMassFilterAdmin')?.value) || 0;
+                communionFilter = parseInt(document.getElementById('reportCommunionFilterAdmin')?.value) || 0;
+                classFilter = parseInt(document.getElementById('reportClassFilterAdmin')?.value) || 0;
+
+                filteredData = summaryData.filter(item => {
+                    const nameMatch = nameFilter === '' || item.name.toLowerCase().includes(nameFilter);
+                    const massMatch = item.totalMass >= massFilter;
+                    const communionMatch = item.totalCommunion >= communionFilter;
+                    const classMatch = item.totalClass >= classFilter;
+                    return nameMatch && massMatch && communionMatch && classMatch;
+                });
+                renderTable();
+            }
+
+            function renderTable() {
+                let rows = '';
+                filteredData.forEach(s => {
+                    rows += `
+                        <tr>
+                            <td>${s.name}</td>
+                            <td>${s.totalDays}</td>
+                            <td>${s.totalMass}</td>
+                            <td>${s.totalCommunion}</td>
+                            <td>${s.totalClass}</td>
+                            <td>${s.totalBehavior}</td>
+                            <td class="total-grade">${s.grandTotal}</td>
+                            <td>
+                                <button class="btn btn-coupon" onclick="showCoupon('${s.id}', '${startDate}', '${endDate}')">🎫 كوبون</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                document.getElementById('adminContent').innerHTML = `
+                    <div>
+                        <div class="header" style="border-bottom: none;">
+                            <div class="logo-container">
+                                <img src="${LOGO_URL}" alt="شعار الخدمة" class="logo-img">
+                                <span class="logo-text">تقرير الفصل</span>
+                            </div>
+                            <div>
+                                <button class="btn" id="backToDailyAdminBtn">🔙 العودة للتسجيل</button>
+                                <button class="btn btn-info" id="toggleDetailedAdmin">📊 عرض التفاصيل</button>
+                                <button class="btn btn-coupon" id="printAllCouponsAdmin">🖨️ طباعة كوبونات الفصل</button>
+                                <button class="btn btn-success" id="exportCouponsExcelAdmin">📥 تصدير الكوبونات Excel</button>
+                            </div>
+                        </div>
+                        <div class="date-range">
+                            <label>من تاريخ:</label>
+                            <input type="date" id="startDateAdmin" value="${startDate}">
+                            <label>إلى تاريخ:</label>
+                            <input type="date" id="endDateAdmin" value="${endDate}">
+                            <button class="btn" id="fetchRangeAdminBtn">عرض</button>
+                        </div>
+                        <div style="background: #f9fafb; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
+                            <div>
+                                <label>🔍 فلتر الاسم:</label>
+                                <input type="text" id="reportNameFilterAdmin" placeholder="اكتب جزءاً من الاسم" class="filter-input" style="width: 150px;" oninput="applyFilters()">
+                            </div>
+                            <div>
+                                <label>القداس ≥:</label>
+                                <input type="number" id="reportMassFilterAdmin" min="0" max="100" value="0" class="filter-number" oninput="applyFilters()">
+                            </div>
+                            <div>
+                                <label>التناول ≥:</label>
+                                <input type="number" id="reportCommunionFilterAdmin" min="0" max="100" value="0" class="filter-number" oninput="applyFilters()">
+                            </div>
+                            <div>
+                                <label>الخدمة ≥:</label>
+                                <input type="number" id="reportClassFilterAdmin" min="0" max="100" value="0" class="filter-number" oninput="applyFilters()">
+                            </div>
+                            <button class="btn" id="clearReportFiltersAdmin">مسح الفلاتر</button>
+                        </div>
+                        <div class="dashboard-summary"></div>
+                        <div class="table-wrapper">
+                            <table class="attendance-table">
+                                <thead>
+                                    <tr>
+                                        <th>الاسم</th>
+                                        <th>عدد أيام الحضور</th>
+                                        <th>إجمالي القداس</th>
+                                        <th>إجمالي التناول</th>
+                                        <th>إجمالي الخدمة</th>
+                                        <th>إجمالي السلوك</th>
+                                        <th>المجموع الكلي</th>
+                                        <th>كوبون</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reportTableBodyAdmin">
+                                    ${rows}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="message"></div>
+                    </div>
                 `;
-            });
 
-            document.getElementById('adminContent').innerHTML = `
-                <div>
-                    <div class="header" style="border-bottom: none;">
-                        <div class="logo-container">
-                            <img src="${LOGO_URL}" alt="شعار الخدمة" class="logo-img">
-                            <span class="logo-text">تقرير الفصل</span>
-                        </div>
-                        <div>
-                            <button class="btn" id="backToDailyAdminBtn">🔙 العودة للتسجيل</button>
-                            <button class="btn btn-info" id="toggleDetailedAdmin">📊 عرض التفاصيل</button>
-                            <button class="btn btn-coupon" id="printAllCouponsAdmin">🖨️ طباعة كوبونات الفصل</button>
-                            <button class="btn btn-success" id="exportCouponsExcelAdmin">📥 تصدير الكوبونات Excel</button>
-                        </div>
-                    </div>
-                    <div class="date-range">
-                        <label>من تاريخ:</label>
-                        <input type="date" id="startDateAdmin" value="${startDate}">
-                        <label>إلى تاريخ:</label>
-                        <input type="date" id="endDateAdmin" value="${endDate}">
-                        <button class="btn" id="fetchRangeAdminBtn">عرض</button>
-                    </div>
-                    <div style="background: #f9fafb; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
-                        <div>
-                            <label for="reportNameFilterAdmin">🔍 فلتر الاسم:</label>
-                            <input type="text" id="reportNameFilterAdmin" placeholder="اكتب جزءاً من الاسم" class="filter-input" style="width: 150px;" oninput="filterReportTableAdmin()">
-                        </div>
-                        <div>
-                            <label for="reportMassFilterAdmin">القداس ≥:</label>
-                            <input type="number" id="reportMassFilterAdmin" min="0" max="100" value="0" class="filter-number" oninput="filterReportTableAdmin()">
-                        </div>
-                        <div>
-                            <label for="reportCommunionFilterAdmin">التناول ≥:</label>
-                            <input type="number" id="reportCommunionFilterAdmin" min="0" max="100" value="0" class="filter-number" oninput="filterReportTableAdmin()">
-                        </div>
-                        <div>
-                            <label for="reportClassFilterAdmin">الخدمة ≥:</label>
-                            <input type="number" id="reportClassFilterAdmin" min="0" max="100" value="0" class="filter-number" oninput="filterReportTableAdmin()">
-                        </div>
-                        <button class="btn" id="clearReportFiltersAdmin">مسح الفلاتر</button>
-                    </div>
-                    <div class="dashboard-summary"></div>
-                    <div class="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>الاسم</th>
-                                    <th>عدد أيام الحضور</th>
-                                    <th>إجمالي القداس</th>
-                                    <th>إجمالي التناول</th>
-                                    <th>إجمالي الخدمة</th>
-                                    <th>إجمالي السلوك</th>
-                                    <th>المجموع الكلي</th>
-                                    <th>كوبون</th>
-                                </tr>
-                            </thead>
-                            <tbody id="reportTableBodyAdmin">
-                                ${rows}
-                            </tbody>
-                        </table>
-                    </div>
-                    <div id="message"></div>
-                </div>
-            `;
+                updateDashboard(attendanceRecords);
 
-            updateDashboard(attendanceRecords);
+                document.getElementById('clearReportFiltersAdmin').addEventListener('click', () => {
+                    document.getElementById('reportNameFilterAdmin').value = '';
+                    document.getElementById('reportMassFilterAdmin').value = '0';
+                    document.getElementById('reportCommunionFilterAdmin').value = '0';
+                    document.getElementById('reportClassFilterAdmin').value = '0';
+                    applyFilters();
+                });
 
-            window.filterReportTableAdmin = function() {
-                const nameFilter = normalizeText(document.getElementById('reportNameFilterAdmin')?.value || '');
-                const massFilter = parseInt(document.getElementById('reportMassFilterAdmin')?.value) || 0;
-                const communionFilter = parseInt(document.getElementById('reportCommunionFilterAdmin')?.value) || 0;
-                const classFilter = parseInt(document.getElementById('reportClassFilterAdmin')?.value) || 0;
-
-                const rows = document.querySelectorAll('#reportTableBodyAdmin tr');
-                rows.forEach(row => {
-                    const nameCell = row.cells[0];
-                    const massCell = row.cells[2];
-                    const communionCell = row.cells[3];
-                    const classCell = row.cells[4];
-
-                    if (nameCell && massCell && communionCell && classCell) {
-                        const name = normalizeText(nameCell.textContent);
-                        const mass = parseInt(massCell.textContent) || 0;
-                        const communion = parseInt(communionCell.textContent) || 0;
-                        const classVal = parseInt(classCell.textContent) || 0;
-
-                        const nameMatch = nameFilter === '' || name.includes(nameFilter);
-                        const massMatch = mass >= massFilter;
-                        const communionMatch = communion >= communionFilter;
-                        const classMatch = classVal >= classFilter;
-
-                        if (nameMatch && massMatch && communionMatch && classMatch) {
-                            row.style.display = '';
-                        } else {
-                            row.style.display = 'none';
-                        }
+                document.getElementById('backToDailyAdminBtn').addEventListener('click', async () => {
+                    viewMode = 'daily';
+                    await renderDailyAdminView(classId);
+                });
+                document.getElementById('toggleDetailedAdmin').addEventListener('click', () => {
+                    renderDetailedReportAdmin(classId, startDate, endDate);
+                });
+                document.getElementById('printAllCouponsAdmin').addEventListener('click', () => {
+                    const studentsWithGrades = filteredData.filter(s => s.grandTotal > 0);
+                    if (studentsWithGrades.length === 0) {
+                        alert('لا يوجد طلاب بمجموع أكبر من صفر لطباعة كوبوناتهم.');
+                        return;
                     }
+                    let couponsHTML = '';
+                    studentsWithGrades.forEach(s => {
+                        const studentRecords = attendanceRecords.filter(r => r.student_id === s.id);
+                        const className = allClasses.find(c => c.id === classId)?.class_name || 'الفصل';
+                        couponsHTML += generateCouponHTML(s.name, className, startDate, endDate, studentRecords);
+                        couponsHTML += '<div style="page-break-after: always;"></div>';
+                    });
+                    printCoupon(couponsHTML);
                 });
-            };
-
-            document.getElementById('clearReportFiltersAdmin').addEventListener('click', () => {
-                document.getElementById('reportNameFilterAdmin').value = '';
-                document.getElementById('reportMassFilterAdmin').value = '0';
-                document.getElementById('reportCommunionFilterAdmin').value = '0';
-                document.getElementById('reportClassFilterAdmin').value = '0';
-                filterReportTableAdmin();
-            });
-
-            document.getElementById('backToDailyAdminBtn').addEventListener('click', async () => {
-                viewMode = 'daily';
-                await renderDailyAdminView(classId);
-            });
-            document.getElementById('toggleDetailedAdmin').addEventListener('click', () => {
-                renderDetailedReportAdmin(classId, startDate, endDate);
-            });
-            document.getElementById('printAllCouponsAdmin').addEventListener('click', () => {
-                const studentsWithGrades = summaryData.filter(s => s.grandTotal > 0);
-                if (studentsWithGrades.length === 0) {
-                    alert('لا يوجد طلاب بمجموع أكبر من صفر لطباعة كوبوناتهم.');
-                    return;
-                }
-                let couponsHTML = '';
-                studentsWithGrades.forEach(s => {
-                    const studentRecords = attendanceRecords.filter(r => r.student_id === s.id);
+                document.getElementById('exportCouponsExcelAdmin').addEventListener('click', () => {
+                    const studentsWithGrades = filteredData.filter(s => s.grandTotal > 0);
+                    if (studentsWithGrades.length === 0) {
+                        alert('لا يوجد طلاب بمجموع أكبر من صفر لتصدير كوبوناتهم.');
+                        return;
+                    }
                     const className = allClasses.find(c => c.id === classId)?.class_name || 'الفصل';
-                    couponsHTML += generateCouponHTML(s.name, className, startDate, endDate, studentRecords);
-                    couponsHTML += '<div style="page-break-after: always;"></div>';
+                    exportCouponsToExcel(studentsWithGrades, className, startDate, endDate);
                 });
-                printCoupon(couponsHTML);
-            });
-            document.getElementById('exportCouponsExcelAdmin').addEventListener('click', () => {
-                const studentsWithGrades = summaryData.filter(s => s.grandTotal > 0);
-                if (studentsWithGrades.length === 0) {
-                    alert('لا يوجد طلاب بمجموع أكبر من صفر لتصدير كوبوناتهم.');
-                    return;
-                }
-                const className = allClasses.find(c => c.id === classId)?.class_name || 'الفصل';
-                exportCouponsToExcel(studentsWithGrades, className, startDate, endDate);
-            });
-            document.getElementById('fetchRangeAdminBtn').addEventListener('click', async () => {
-                const newStart = document.getElementById('startDateAdmin').value;
-                const newEnd = document.getElementById('endDateAdmin').value;
-                attendanceRecords = await fetchAttendanceForDateRange(classId, newStart, newEnd);
-                renderReportTableAdmin(classId, newStart, newEnd);
-            });
+                document.getElementById('fetchRangeAdminBtn').addEventListener('click', async () => {
+                    const newStart = document.getElementById('startDateAdmin').value;
+                    const newEnd = document.getElementById('endDateAdmin').value;
+                    attendanceRecords = await fetchAttendanceForDateRange(classId, newStart, newEnd);
+                    renderReportTableAdmin(classId, newStart, newEnd);
+                });
+            }
+
+            renderTable();
 
             window.currentClassId = classId;
             window.currentUser = currentUser;
@@ -1792,7 +1749,7 @@
                         <td>${rec.communion_grade}</td>
                         <td>${rec.class_grade}</td>
                         <td>${rec.behavior_grade}</td>
-                        <td>${rec.notes || ''}<td>
+                        <td>${rec.notes || ''}</td>
                         <td class="total-grade">${total}</td>
                     </tr>
                 `;
@@ -1817,7 +1774,7 @@
                         <button class="btn" id="fetchRangeAdminBtn">عرض</button>
                     </div>
                     <div class="table-wrapper">
-                        <tr>
+                        <table class="attendance-table">
                             <thead>
                                 <tr>
                                     <th>الاسم</th>
@@ -1925,7 +1882,7 @@
                         return `
                             <h3 style="margin: 20px 0 10px; color: #1e3a8a;">${cls.class_name}</h3>
                             <div class="table-wrapper">
-                                <table>
+                                <table class="attendance-table">
                                     <thead>
                                         <tr>
                                             <th>الاسم</th>
@@ -2018,7 +1975,6 @@
 
         // ========== دالة حفظ الحضور المعدلة مع التحذير ==========
         async function saveDailyAttendance(classId, date) {
-            // التحقق أولاً مما إذا كان اليوم مسجلاً بالفعل
             const { data: existingRecords, error: fetchError } = await supabaseClient
                 .from('attendance')
                 .select('id')
@@ -2119,6 +2075,7 @@
             init();
         }
 
+        // دوال الكوبونات العامة من الأزرار
         window.showCoupon = async function(studentId, startDate, endDate) {
             const student = window.students?.find(s => s.id === studentId);
             if (!student) return;
@@ -2137,6 +2094,127 @@
             const couponHTML = document.getElementById('couponInner').innerHTML;
             printCoupon(couponHTML);
         };
+
+        // ========== دوال تسجيل الدخول الرئيسية ==========
+        async function init() {
+            const { data: { session }, error } = await supabaseClient.auth.getSession();
+            if (session?.user) {
+                const { data: userData, error: userError } = await supabaseClient
+                    .from('users')
+                    .select('*, classes(id, class_name)')
+                    .eq('id', session.user.id)
+                    .single();
+
+                if (userData) {
+                    currentUser = userData;
+                    currentClassId = userData.class_id;
+                    if (userData.role === 'admin') {
+                        allClasses = await fetchAllClasses();
+                        loadAdminView();
+                    } else {
+                        loadServantView();
+                    }
+                } else {
+                    renderLogin();
+                }
+            } else {
+                renderLogin();
+            }
+        }
+
+        function renderLogin() {
+            document.getElementById('app').innerHTML = `
+                <div>
+                    <div class="header" style="justify-content: center; border-bottom: none;">
+                        <div class="logo-container">
+                            <img src="${LOGO_URL}" alt="شعار الخدمة" class="logo-img">
+                            <span class="logo-text">خدمة خامسة وسادسة</span>
+                        </div>
+                    </div>
+                    <div class="login-form">
+                        <h2>تسجيل الدخول</h2>
+                        <input type="email" id="email" placeholder="البريد الإلكتروني" />
+                        <input type="password" id="password" placeholder="كلمة السر" />
+                        <button class="btn" id="loginBtn" style="width:100%;">دخول</button>
+                        <div id="loginMessage" style="margin-top:15px;"></div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('loginBtn').addEventListener('click', async () => {
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                if (error) {
+                    document.getElementById('loginMessage').innerHTML = `<div class="message error">${error.message}</div>`;
+                } else {
+                    init();
+                }
+            });
+        }
+
+        async function loadServantView() {
+            const { data: stds, error } = await supabaseClient
+                .from('students')
+                .select('*')
+                .eq('class_id', currentClassId)
+                .eq('active', true);
+            students = deduplicateStudents(stds || []);
+            viewMode = 'daily';
+            await renderDailyView();
+        }
+
+        async function loadAdminView() {
+            let options = '<option value="">اختر الفصل</option>';
+            allClasses.forEach(cls => {
+                options += `<option value="${cls.id}">${cls.class_name}</option>`;
+            });
+
+            document.getElementById('app').innerHTML = `
+                <div>
+                    <div class="header">
+                        <div class="logo-container">
+                            <img src="${LOGO_URL}" alt="شعار الخدمة" class="logo-img">
+                            <span class="logo-text">خدمة خامسة وسادسة</span>
+                        </div>
+                        <div>
+                            <button class="btn btn-info" id="allClassesReportBtn">📋 تقرير شامل</button>
+                            <button class="btn" id="logoutBtn">تسجيل خروج</button>
+                        </div>
+                    </div>
+                    <div style="margin-bottom:20px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <label>اختر الفصل: </label>
+                        <select id="classSelect" style="padding:8px; border-radius:12px; flex:1; min-width:200px;">${options}</select>
+                    </div>
+                    <div id="adminContent"></div>
+                </div>
+            `;
+
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('allClassesReportBtn').addEventListener('click', async () => {
+                viewMode = 'allClasses';
+                const endDate = getTodayDate();
+                const startDate = getThreeWeeksAgo();
+                attendanceRecords = await fetchAttendanceForAllClasses(startDate, endDate);
+                const allStudents = await fetchAllStudents();
+                renderAllClassesReport(allStudents, attendanceRecords, startDate, endDate);
+            });
+
+            document.getElementById('classSelect').addEventListener('change', async (e) => {
+                const classId = e.target.value;
+                if (classId) {
+                    currentAdminClassId = classId;
+                    const { data: stds, error } = await supabaseClient.from('students').select('*').eq('class_id', classId).eq('active', true);
+                    students = deduplicateStudents(stds || []);
+                    viewMode = 'daily';
+                    await renderDailyAdminView(classId);
+                } else {
+                    document.getElementById('adminContent').innerHTML = '';
+                }
+            });
+        }
+
+        document.getElementById('confirmAddStudent').addEventListener('click', handleAddStudent);
+        document.getElementById('cancelAddStudent').addEventListener('click', hideAddStudentModal);
 
         init();
     </script>
