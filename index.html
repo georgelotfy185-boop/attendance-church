@@ -7,90 +7,15 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        body {
-            background: #f0f2f5;
-            padding: 10px;
-            min-height: 100vh;
-            position: relative;
-            background-image: url('https://i.ibb.co/4gP3wDDV/image.png');
-            background-repeat: repeat;
-            background-size: 200px 200px;
-            background-position: center;
-            background-attachment: fixed;
-            opacity: 0.98;
-        }
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.85);
-            pointer-events: none;
-            z-index: 0;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(2px);
-            border-radius: 20px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-            padding: 20px;
-            position: relative;
-            z-index: 1;
-        }
-        .header {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #e5e7eb;
-            padding-bottom: 15px;
-        }
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-        .logo-img {
-            height: 70px;
-            width: auto;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .logo-text {
-            font-size: 24px;
-            font-weight: bold;
-            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .btn {
-            background: #1e3a8a;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 30px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 500;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: background 0.2s, opacity 0.2s;
-            margin: 5px;
-            min-width: 120px;
-            position: relative;
-            z-index: 10;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: #f0f2f5; padding: 10px; min-height: 100vh; position: relative; background-image: url('https://i.ibb.co/4gP3wDDV/image.png'); background-repeat: repeat; background-size: 200px 200px; background-position: center; background-attachment: fixed; opacity: 0.98; }
+        body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.85); pointer-events: none; z-index: 0; }
+        .container { max-width: 1200px; margin: 0 auto; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(2px); border-radius: 20px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); padding: 20px; position: relative; z-index: 1; }
+        .header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; padding-bottom: 15px; }
+        .logo-container { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .logo-img { height: 70px; width: auto; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .logo-text { font-size: 24px; font-weight: bold; background: linear-gradient(135deg, #1e3a8a, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .btn { background: #1e3a8a; color: white; border: none; padding: 12px 20px; border-radius: 30px; cursor: pointer; font-size: 16px; font-weight: 500; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: background 0.2s, opacity 0.2s; margin: 5px; min-width: 120px; position: relative; z-index: 10; }
         .btn:hover { background: #2563eb; }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .btn-success { background: #10b981; }
@@ -104,284 +29,59 @@
         .btn-add { background: #10b981; }
         .btn-servant { background: #0ea5e9; }
         .btn-servant:hover:not(:disabled) { background: #0284c7; }
-        .spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-            margin-left: 8px;
-        }
+        .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s ease-in-out infinite; margin-left: 8px; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .login-form {
-            max-width: 400px;
-            margin: 20px auto;
-            padding: 30px;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 24px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            text-align: center;
-            backdrop-filter: blur(2px);
-        }
-        .login-form h2 {
-            margin-bottom: 20px;
-            color: #1e3a8a;
-            font-size: 28px;
-        }
-        .login-form input {
-            width: 100%;
-            padding: 16px;
-            margin: 8px 0 20px;
-            border: 1px solid #d1d5db;
-            border-radius: 16px;
-            font-size: 18px;
-        }
-        .date-bar, .date-range {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            align-items: center;
-            margin-bottom: 25px;
-            background: rgba(249, 250, 251, 0.9);
-            padding: 20px;
-            border-radius: 20px;
-            backdrop-filter: blur(2px);
-        }
-        .date-bar label, .date-range label {
-            font-weight: 600;
-            color: #374151;
-            font-size: 16px;
-        }
-        .date-bar input[type="date"], .date-range input[type="date"] {
-            padding: 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 12px;
-            font-size: 16px;
-            background: white;
-            flex: 1;
-            min-width: 200px;
-        }
-        .dashboard-summary {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            margin-bottom: 25px;
-            background: rgba(249, 250, 251, 0.9);
-            padding: 20px;
-            border-radius: 20px;
-            backdrop-filter: blur(2px);
-        }
-        .stat-card {
-            background: white;
-            border-radius: 16px;
-            padding: 16px;
-            flex: 1 1 160px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            text-align: center;
-        }
-        .stat-card h4 {
-            color: #6b7280;
-            font-size: 14px;
-            margin-bottom: 8px;
-        }
-        .stat-card .value {
-            font-size: 28px;
-            font-weight: 700;
-            color: #1e3a8a;
-        }
-        .table-wrapper {
-            overflow-x: auto;
-            margin-bottom: 20px;
-            border-radius: 16px;
-            border: 1px solid #e5e7eb;
-            background: white;
-        }
-        .attendance-table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-            min-width: 800px;
-        }
-        .attendance-table th,
-        .attendance-table td {
-            border: 1px solid #e5e7eb;
-            padding: 12px;
-            text-align: center;
-            vertical-align: middle;
-        }
-        .attendance-table th {
-            background: #1e3a8a;
-            color: white;
-            font-weight: 600;
-            font-size: 15px;
-        }
-        .attendance-table input,
-        .attendance-table select {
-            width: 100%;
-            padding: 8px;
-            text-align: center;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 14px;
-            box-sizing: border-box;
-        }
-        .attendance-table td:first-child {
-            text-align: right;
-            padding-right: 10px;
-        }
-        .servant-check {
-            width: 28px;
-            height: 28px;
-            cursor: pointer;
-            accent-color: #10b981;
-        }
-        .name-cell {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .absent-warning {
-            background-color: #fee2e2;
-            color: #b91c1c;
-            font-weight: 600;
-            border-radius: 20px;
-            padding: 4px 8px;
-            font-size: 13px;
-            display: inline-block;
-            white-space: nowrap;
-        }
-        .repeated-absence {
-            background-color: #fef3c7;
-            color: #92400e;
-            font-weight: 600;
-            border-radius: 20px;
-            padding: 4px 8px;
-            font-size: 13px;
-            display: inline-block;
-            white-space: nowrap;
-        }
-        .save-btn {
-            background: #10b981;
-            color: white;
-            border: none;
-            padding: 18px 28px;
-            border-radius: 40px;
-            font-size: 20px;
-            font-weight: 600;
-            width: 100%;
-            cursor: pointer;
-            box-shadow: 0 6px 12px rgba(16,185,129,0.3);
-            transition: background 0.2s, opacity 0.2s;
-            margin-top: 10px;
-            position: relative;
-        }
+        .login-form { max-width: 400px; margin: 20px auto; padding: 30px; background: rgba(255, 255, 255, 0.95); border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; backdrop-filter: blur(2px); }
+        .login-form h2 { margin-bottom: 20px; color: #1e3a8a; font-size: 28px; }
+        .login-form input { width: 100%; padding: 16px; margin: 8px 0 20px; border: 1px solid #d1d5db; border-radius: 16px; font-size: 18px; }
+        .date-bar, .date-range { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; margin-bottom: 25px; background: rgba(249, 250, 251, 0.9); padding: 20px; border-radius: 20px; backdrop-filter: blur(2px); }
+        .date-bar label, .date-range label { font-weight: 600; color: #374151; font-size: 16px; }
+        .date-bar input[type="date"], .date-range input[type="date"] { padding: 12px; border: 1px solid #d1d5db; border-radius: 12px; font-size: 16px; background: white; flex: 1; min-width: 200px; }
+        .dashboard-summary { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 25px; background: rgba(249, 250, 251, 0.9); padding: 20px; border-radius: 20px; backdrop-filter: blur(2px); }
+        .stat-card { background: white; border-radius: 16px; padding: 16px; flex: 1 1 160px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center; }
+        .stat-card h4 { color: #6b7280; font-size: 14px; margin-bottom: 8px; }
+        .stat-card .value { font-size: 28px; font-weight: 700; color: #1e3a8a; }
+        .table-wrapper { overflow-x: auto; margin-bottom: 20px; border-radius: 16px; border: 1px solid #e5e7eb; background: white; }
+        .attendance-table { width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 700px; }
+        .attendance-table th, .attendance-table td { border: 1px solid #e5e7eb; padding: 12px; text-align: center; vertical-align: middle; }
+        .attendance-table th { background: #1e3a8a; color: white; font-weight: 600; font-size: 15px; }
+        .attendance-table input, .attendance-table select { width: 100%; padding: 8px; text-align: center; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; box-sizing: border-box; }
+        .attendance-table td:first-child { text-align: right; padding-right: 10px; }
+        .servant-check { width: 28px; height: 28px; cursor: pointer; accent-color: #10b981; }
+        .name-cell { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+        .absent-warning { background-color: #fee2e2; color: #b91c1c; font-weight: 600; border-radius: 20px; padding: 4px 8px; font-size: 13px; display: inline-block; white-space: nowrap; }
+        .repeated-absence { background-color: #fef3c7; color: #92400e; font-weight: 600; border-radius: 20px; padding: 4px 8px; font-size: 13px; display: inline-block; white-space: nowrap; }
+        .save-btn { background: #10b981; color: white; border: none; padding: 18px 28px; border-radius: 40px; font-size: 20px; font-weight: 600; width: 100%; cursor: pointer; box-shadow: 0 6px 12px rgba(16,185,129,0.3); transition: background 0.2s, opacity 0.2s; margin-top: 10px; position: relative; }
         .save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .save-btn:hover:not(:disabled) { background: #059669; }
-        .message {
-            padding: 16px;
-            border-radius: 16px;
-            margin: 20px 0;
-            text-align: center;
-            font-weight: 500;
-            font-size: 16px;
-        }
+        .message { padding: 16px; border-radius: 16px; margin: 20px 0; text-align: center; font-weight: 500; font-size: 16px; }
         .success { background: #d1fae5; color: #065f46; }
         .error { background: #fee2e2; color: #991b1b; }
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-        .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 24px;
-            max-width: 500px;
-            width: 90%;
-            direction: rtl;
-        }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 24px; max-width: 500px; width: 90%; direction: rtl; }
         .modal-content h3 { margin-bottom: 20px; color: #1e3a8a; }
-        .modal-content input, .modal-content select {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border: 1px solid #d1d5db;
-            border-radius: 12px;
-            font-size: 16px;
-        }
-        .coupon-modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-        .coupon-content {
-            background: white;
-            padding: 30px;
-            border-radius: 24px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-            position: relative;
-            direction: rtl;
-        }
-        .coupon-close {
-            position: absolute;
-            top: 15px; left: 15px;
-            font-size: 24px;
-            cursor: pointer;
-            color: #6b7280;
-        }
-        .print-btn {
-            background: #1e3a8a;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 30px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 15px;
-            width: 100%;
-        }
-        .print-btn:hover { background: #2563eb; }
-        .filter-input, .filter-number {
-            background: white !important;
-            border: 1px solid #d1d5db !important;
-            padding: 10px !important;
-            border-radius: 8px !important;
-            font-size: 16px !important;
-            pointer-events: auto !important;
-            z-index: 100 !important;
-            position: relative !important;
-        }
+        .modal-content input, .modal-content select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #d1d5db; border-radius: 12px; font-size: 16px; }
+        .coupon-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .coupon-content { background: white; padding: 30px; border-radius: 24px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; position: relative; direction: rtl; }
+        .coupon-close { position: absolute; top: 15px; left: 15px; font-size: 24px; cursor: pointer; color: #6b7280; }
+        .print-btn { background: #1e3a8a; color: white; border: none; padding: 12px 24px; border-radius: 30px; cursor: pointer; font-size: 16px; margin-top: 15px; width: 100%; }
+        .filter-input, .filter-number { background: white !important; border: 1px solid #d1d5db !important; padding: 10px !important; border-radius: 8px !important; font-size: 16px !important; }
         @media (max-width: 768px) {
             .btn { width: 100%; margin: 5px 0; }
             .header { flex-direction: column; align-items: flex-start; }
             .logo-container { margin-bottom: 10px; }
             .date-bar, .date-range { flex-direction: column; align-items: stretch; }
-            .attendance-table th, .attendance-table td { padding: 8px; }
+            .attendance-table th, .attendance-table td { padding: 8px 4px; }
             .attendance-table input, .attendance-table select { padding: 6px; font-size: 12px; }
+            .servant-check { width: 32px; height: 32px; }
         }
         @media (max-width: 400px) {
-            .attendance-table th, .attendance-table td { padding: 6px; }
+            .attendance-table th, .attendance-table td { padding: 6px 2px; }
             .attendance-table input, .attendance-table select { padding: 4px; font-size: 11px; }
+            .servant-check { width: 36px; height: 36px; }
         }
     </style>
-</head> <body>
+</head><body>
     <div class="container" id="app"></div>
 
     <!-- نافذة إضافة طالب -->
@@ -427,6 +127,7 @@
 
         const LOGO_URL = 'https://i.ibb.co/4gP3wDDV/image.png';
 
+        // ================== دوال مساعدة ==================
         function deduplicateStudents(list) {
             const m = new Map();
             for (const s of list) {
@@ -578,6 +279,7 @@
             if (row) updateRowTotal(row);
         }
 
+        // ================== الكوبونات ==================
         function openCouponModal() { document.getElementById('couponModal').style.display = 'flex'; }
         function closeCouponModal() { document.getElementById('couponModal').style.display = 'none'; }
         function printCoupon(htmlContent) {
@@ -704,7 +406,7 @@
             }
         }
 
-        // ================== التسجيل اليومي ==================
+        // ================== التسجيل اليومي للأولاد ==================
         async function renderDailyView() {
             const today = getTodayDate();
             attendanceRecords = await fetchAttendanceForDate(currentClassId, today);
@@ -907,7 +609,7 @@
             });
         }
 
-        // ================== التقارير ==================
+        // ================== تقارير الأولاد ==================
         function renderReportTable(startDate, endDate) {
             const summaryData = students.map(s => {
                 const recs = attendanceRecords.filter(r => r.student_id === s.id);
@@ -920,20 +622,17 @@
                 return { id: s.id, name: s.name, totalDays: days, totalMass: tM, totalCommunion: tC, totalClass: tCl, totalBehavior: tB, grandTotal: tM + tC + tCl + tB };
             });
             let filteredData = [...summaryData];
-            let nameFilter = '', massFilter = 0, communionFilter = 0, classFilter = 0;
-
             function applyFilters() {
-                nameFilter = document.getElementById('reportNameFilter')?.value?.toLowerCase() || '';
-                massFilter = parseInt(document.getElementById('reportMassFilter')?.value) || 0;
-                communionFilter = parseInt(document.getElementById('reportCommunionFilter')?.value) || 0;
-                classFilter = parseInt(document.getElementById('reportClassFilter')?.value) || 0;
+                const nameFilter = document.getElementById('reportNameFilter')?.value?.toLowerCase() || '';
+                const massFilter = parseInt(document.getElementById('reportMassFilter')?.value) || 0;
+                const communionFilter = parseInt(document.getElementById('reportCommunionFilter')?.value) || 0;
+                const classFilter = parseInt(document.getElementById('reportClassFilter')?.value) || 0;
                 filteredData = summaryData.filter(item =>
                     (nameFilter === '' || item.name.toLowerCase().includes(nameFilter)) &&
                     item.totalMass >= massFilter && item.totalCommunion >= communionFilter && item.totalClass >= classFilter
                 );
                 renderTable();
             }
-
             function renderTable() {
                 let rows = '';
                 filteredData.forEach(s => {
@@ -1321,7 +1020,7 @@
         };
 
         // ============================================================
-        // ================== دوال حضور الخدام (جديد) ==================
+        // ================== حضور الخدام ==================
         // ============================================================
         let currentServants = [];
         let servantAttendanceRecords = [];
@@ -1372,26 +1071,36 @@
             } catch (err) { return false; }
         }
 
+        // ============ صفحة اختيار الفصل والتاريخ ============
         function renderServantSelector() {
             let options = '<option value="">اختر الفصل</option>';
             allClasses.forEach(cls => { options += `<option value="${cls.id}">${cls.class_name}</option>`; });
             const today = getTodayDate();
-            document.getElementById('adminContent').innerHTML = `
-                <div>
+            
+            document.getElementById('app').innerHTML = `
+                <div class="container">
                     <div class="header" style="border-bottom:none;">
-                        <div class="logo-container"><img src="${LOGO_URL}" class="logo-img"><span class="logo-text">حضور الخدام</span></div>
-                        <div><button class="btn" id="backToAdminMain2">🔙 العودة</button></div>
+                        <div class="logo-container">
+                            <img src="${LOGO_URL}" class="logo-img">
+                            <span class="logo-text">حضور الخدام</span>
+                        </div>
+                        <div>
+                            <button class="btn" id="backToAdminMain2">🔙 العودة للرئيسية</button>
+                        </div>
                     </div>
-                    <div class="date-bar" style="flex-direction:column;align-items:stretch;">
-                        <label>اختر الفصل:</label>
-                        <select id="servantClassSelect" style="padding:12px;border-radius:12px;font-size:16px;">${options}</select>
-                        <label>📅 التاريخ (الجمعة):</label>
-                        <input type="date" id="servantDateSelector" value="${today}">
-                        <button class="btn btn-success" id="showServantAttendanceBtn" style="width:100%;padding:15px;font-size:18px;margin-top:10px;">📋 عرض كشف الحضور</button>
+                    <div style="background:#f9fafb;padding:20px;border-radius:20px;margin-bottom:20px;">
+                        <label style="display:block;font-weight:600;color:#374151;margin-bottom:10px;">👥 اختر الفصل:</label>
+                        <select id="servantClassSelect" style="width:100%;padding:15px;border-radius:12px;font-size:16px;border:1px solid #d1d5db;margin-bottom:20px;">${options}</select>
+                        
+                        <label style="display:block;font-weight:600;color:#374151;margin-bottom:10px;">📅 التاريخ (الجمعة):</label>
+                        <input type="date" id="servantDateSelector" value="${today}" style="width:100%;padding:15px;border-radius:12px;font-size:16px;border:1px solid #d1d5db;margin-bottom:20px;">
+                        
+                        <button class="btn btn-success" id="showServantAttendanceBtn" style="width:100%;padding:18px;font-size:18px;border-radius:15px;">📋 عرض كشف الحضور</button>
                     </div>
                 </div>
             `;
-            document.getElementById('backToAdminMain2').onclick = () => loadAdminView();
+            
+            document.getElementById('backToAdminMain2').onclick = () => { loadAdminView(); };
             document.getElementById('showServantAttendanceBtn').onclick = () => {
                 const cid = document.getElementById('servantClassSelect').value;
                 const date = document.getElementById('servantDateSelector').value;
@@ -1401,12 +1110,14 @@
             };
         }
 
+        // ============ صفحة تسجيل حضور الخدام ============
         async function renderServantAttendance(classId, selectedDate) {
             currentServants = await fetchServantsForClass(classId);
             const servantIds = currentServants.map(s => s.id);
             servantAttendanceRecords = await fetchServantAttendanceForDate(servantIds, selectedDate);
             const classInfo = allClasses.find(c => c.id === classId);
             const className = classInfo ? classInfo.class_name : '';
+            
             let rows = '';
             for (const s of currentServants) {
                 const rec = servantAttendanceRecords.find(r => r.servant_id === s.id);
@@ -1417,6 +1128,7 @@
                 const total = (aM ? 1 : 0) + (aO ? 1 : 0) + (aP ? 1 : 0);
                 const isAbsentAll = total === 0;
                 const isRepeated = await isServantRepeatedAbsence(s.id, selectedDate);
+                
                 let rowColor = '', badge = '';
                 if (isRepeated && isAbsentAll) {
                     rowColor = "style='background:#fff1f0'";
@@ -1424,45 +1136,70 @@
                 } else if (isAbsentAll) {
                     rowColor = "style='background:#fffbeb'";
                     badge = '<span class="absent-warning">⚠️ غائب</span>';
-                } else rowColor = "style='background:#f0fdf4'";
+                } else {
+                    rowColor = "style='background:#f0fdf4'";
+                }
+                
                 rows += `
                     <tr data-servant-id="${s.id}" ${rowColor}>
                         <td><div class="name-cell"><span>${s.name}</span>${badge}</div></td>
                         <td><input type="checkbox" class="servant-check mass-check" ${aM ? 'checked' : ''}></td>
                         <td><input type="checkbox" class="servant-check opening-check" ${aO ? 'checked' : ''}></td>
                         <td><input type="checkbox" class="servant-check preparation-check" ${aP ? 'checked' : ''}></td>
-                        <td><input type="text" class="grade-input" value="${notes.replace(/"/g, '&quot;')}"></td>
+                        <td><input type="text" class="grade-input" value="${notes.replace(/"/g, '&quot;')}" placeholder="ملاحظات"></td>
                     </tr>
                 `;
             }
-            document.getElementById('adminContent').innerHTML = `
-                <div>
+            
+            document.getElementById('app').innerHTML = `
+                <div class="container">
                     <div class="header" style="border-bottom:none;">
-                        <div class="logo-container"><img src="${LOGO_URL}" class="logo-img"><span class="logo-text">حضور الخدام - ${className}</span></div>
+                        <div class="logo-container">
+                            <img src="${LOGO_URL}" class="logo-img">
+                            <span class="logo-text">حضور الخدام - ${className}</span>
+                        </div>
                         <div>
                             <button class="btn" id="backToServantSelector">🔙 العودة</button>
                             <button class="btn btn-warning" id="servantReportBtn">📊 تقرير حضور</button>
                         </div>
                     </div>
-                    <div class="date-bar"><label>📅 التاريخ:</label><input type="date" id="servantAttendanceDate" value="${selectedDate}"></div>
+                    
+                    <div class="date-bar" style="flex-direction:column;align-items:stretch;">
+                        <label style="margin-bottom:8px;">📅 التاريخ:</label>
+                        <input type="date" id="servantAttendanceDate" value="${selectedDate}">
+                    </div>
+                    
                     <div class="dashboard-summary" id="servantDashboard"></div>
+                    
                     <div class="table-wrapper">
                         <table class="attendance-table">
-                            <thead><tr><th>الاسم</th><th>القداس</th><th>الافتتاحية</th><th>التحضير</th><th>ملاحظات</th></tr></thead>
+                            <thead>
+                                <tr>
+                                    <th style="width:35%;">الاسم</th>
+                                    <th style="width:15%;">القداس</th>
+                                    <th style="width:15%;">الافتتاحية</th>
+                                    <th style="width:15%;">التحضير</th>
+                                    <th style="width:20%;">ملاحظات</th>
+                                </tr>
+                            </thead>
                             <tbody id="servantAttendanceBody">${rows}</tbody>
                         </table>
                     </div>
+                    
                     <button class="save-btn" id="saveServantAttendance">💾 حفظ حضور الخدام</button>
                     <div id="servantMessage"></div>
                 </div>
             `;
+            
             updateServantDashboard();
+            
             document.getElementById('backToServantSelector').onclick = () => renderServantSelector();
             document.getElementById('servantReportBtn').onclick = () => renderServantReport(classId);
             document.getElementById('saveServantAttendance').onclick = () => saveServantAttendance(classId, selectedDate);
             document.getElementById('servantAttendanceDate').onchange = async (e) => {
                 await renderServantAttendance(classId, e.target.value);
             };
+            
             document.querySelectorAll('.servant-check').forEach(chk => {
                 chk.addEventListener('change', updateServantDashboard);
             });
@@ -1492,15 +1229,21 @@
             }
         }
 
+        // ============ حفظ حضور الخدام (مع تحذير واضح) ============
         async function saveServantAttendance(classId, date) {
             const servantIds = currentServants.map(s => s.id);
+            
             const { data: existing } = await supabaseClient
                 .from('servant_attendance').select('id')
                 .eq('date', date).in('servant_id', servantIds);
+            
             if (existing && existing.length > 0) {
-                if (!confirm(`⚠️ هذا اليوم (${date}) مسجل بالفعل لحضور الخدام.\nهل تريد تعديل البيانات؟`)) return;
+                const userConfirmed = confirm(`⚠️ تنبيه مهم ⚠️\n\nهذا اليوم (${date}) مسجل بالفعل لحضور الخدام.\n\nهل تريد تعديل البيانات القديمة؟\n\n(اضغط موافق للتعديل، أو إلغاء للرجوع بدون حفظ)`);
+                if (!userConfirmed) return;
             }
+            
             if (!confirm('هل أنت متأكد من حفظ حضور الخدام؟')) return;
+            
             const records = [];
             document.querySelectorAll('#servantAttendanceBody tr').forEach(row => {
                 const sid = row.dataset.servantId;
@@ -1514,20 +1257,35 @@
                     notes: notes, recorded_by: currentUser.id
                 });
             });
+            
+            const saveBtn = document.getElementById('saveServantAttendance');
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = 'جاري الحفظ <span class="spinner"></span>';
+            }
+            
             let hasError = false;
             for (const rec of records) {
                 const { error } = await supabaseClient
                     .from('servant_attendance').upsert(rec, { onConflict: 'servant_id, date' });
                 if (error) { console.error(error); hasError = true; }
             }
+            
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '💾 حفظ حضور الخدام';
+            }
+            
             const msg = document.getElementById('servantMessage');
-            if (hasError) msg.innerHTML = '<div class="message error">حدث خطأ أثناء الحفظ</div>';
-            else {
+            if (hasError) {
+                msg.innerHTML = '<div class="message error">حدث خطأ أثناء الحفظ</div>';
+            } else {
                 msg.innerHTML = '<div class="message success">✅ تم حفظ حضور الخدام بنجاح</div>';
                 setTimeout(() => renderServantAttendance(classId, date), 1000);
             }
         }
 
+        // ============ تقرير فصل واحد ============
         async function renderServantReport(classId) {
             const servantsList = await fetchServantsForClass(classId);
             const servantIds = servantsList.map(s => s.id);
@@ -1562,10 +1320,14 @@
             }
 
             const summaryData = buildSummary(attRecords);
-            document.getElementById('adminContent').innerHTML = `
-                <div>
+            
+            document.getElementById('app').innerHTML = `
+                <div class="container">
                     <div class="header" style="border-bottom:none;">
-                        <div class="logo-container"><img src="${LOGO_URL}" class="logo-img"><span class="logo-text">تقرير حضور الخدام - ${className}</span></div>
+                        <div class="logo-container">
+                            <img src="${LOGO_URL}" class="logo-img">
+                            <span class="logo-text">تقرير حضور الخدام - ${className}</span>
+                        </div>
                         <div>
                             <button class="btn" id="backToServantAttendanceBtn">🔙 العودة للتسجيل</button>
                             <button class="btn btn-success" id="exportServantReportBtn">📥 تصدير Excel</button>
@@ -1580,12 +1342,22 @@
                     </div>
                     <div class="table-wrapper">
                         <table class="attendance-table">
-                            <thead><tr><th>الاسم</th><th>عدد التسجيلات</th><th>حضور القداس</th><th>حضور الافتتاحية</th><th>حضور التحضير</th><th>حضور كامل</th></tr></thead>
+                            <thead>
+                                <tr>
+                                    <th>الاسم</th>
+                                    <th>عدد التسجيلات</th>
+                                    <th>حضور القداس</th>
+                                    <th>حضور الافتتاحية</th>
+                                    <th>حضور التحضير</th>
+                                    <th>حضور كامل</th>
+                                </tr>
+                            </thead>
                             <tbody id="servantReportBody">${renderSummary(summaryData)}</tbody>
                         </table>
                     </div>
                 </div>
             `;
+            
             document.getElementById('backToServantAttendanceBtn').onclick = () => renderServantAttendance(classId, getTodayDate());
             document.getElementById('refreshServantReportBtn').onclick = async () => {
                 const ns = document.getElementById('servantReportStart').value;
@@ -1604,6 +1376,7 @@
             };
         }
 
+        // ============ تقرير مجمع لكل الفصول ============
         async function renderAllServantsReport() {
             const allServants = await fetchAllServants();
             const endDate = getTodayDate();
@@ -1643,12 +1416,16 @@
             }
 
             const summaryGroups = buildAllSummary(attRecords);
-            document.getElementById('adminContent').innerHTML = `
-                <div>
+            
+            document.getElementById('app').innerHTML = `
+                <div class="container">
                     <div class="header" style="border-bottom:none;">
-                        <div class="logo-container"><img src="${LOGO_URL}" class="logo-img"><span class="logo-text">تقرير حضور الخدام - جميع الفصول</span></div>
+                        <div class="logo-container">
+                            <img src="${LOGO_URL}" class="logo-img">
+                            <span class="logo-text">تقرير حضور الخدام - جميع الفصول</span>
+                        </div>
                         <div>
-                            <button class="btn" id="backToAdminMain3">🔙 العودة</button>
+                            <button class="btn" id="backToAdminMain3">🔙 العودة للرئيسية</button>
                             <button class="btn btn-success" id="exportAllServantsBtn">📥 تصدير Excel مجمع</button>
                         </div>
                     </div>
@@ -1662,6 +1439,7 @@
                     <div id="allServantsReportBody">${renderAll(summaryGroups)}</div>
                 </div>
             `;
+            
             document.getElementById('backToAdminMain3').onclick = () => loadAdminView();
             document.getElementById('refreshAllServantsBtn').onclick = async () => {
                 const ns = document.getElementById('allServantsStart').value;
@@ -1683,7 +1461,7 @@
         }
 
         // ============================================================
-        // ================== تسجيل الدخول والواجهة الرئيسية ==================
+        // ================== تسجيل الدخول والتهيئة ==================
         // ============================================================
         async function init() {
             const { data: { session } } = await supabaseClient.auth.getSession();
